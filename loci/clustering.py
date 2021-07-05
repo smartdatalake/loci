@@ -10,8 +10,10 @@ from geopandas import GeoDataFrame
 from hdbscan import HDBSCAN
 from shapely.geometry import MultiPoint
 
+from loci.analytics import filter_by_kwd
 
-def compute_clusters(pois, alg='dbscan', min_pts=None, eps=None, n_jobs=1):
+
+def compute_clusters(pois, alg='dbscan', min_pts=None, eps=None, sample_size=-1, kwd=None, n_jobs=1):
     """Computes clusters using the DBSCAN or the HDBSCAN algorithm.
 
     Args:
@@ -19,6 +21,8 @@ def compute_clusters(pois, alg='dbscan', min_pts=None, eps=None, n_jobs=1):
          alg (string): The clustering algorithm to use (dbscan or hdbscan; default: dbscan).
          min_pts (integer): The minimum number of neighbors for a dense point.
          eps (float): The neighborhood radius.
+         sample_size (int): Sample size (default: -1; show all).
+         kwd (string): A keyword to filter by (optional).         
          n_jobs (integer): Number of parallel jobs to run in the algorithm (default: 1)
 
     Returns:
@@ -26,8 +30,18 @@ def compute_clusters(pois, alg='dbscan', min_pts=None, eps=None, n_jobs=1):
           is also returned (which varies in the case of HDBSCAN).
     """
 
+    # Filter by keyword
+    if kwd is None:
+        pois_filtered = pois
+    else:
+        pois_filtered = filter_by_kwd(pois, kwd)
+        
+    # Pick a sample
+    if sample_size > 0 and sample_size < len(pois_filtered.index):
+        pois_filtered = pois_filtered.sample(sample_size)
+
     # Prepare list of coordinates
-    poi_list = [[p.x, p.y] for p in pois['geometry']]
+    poi_list = [[p.x, p.y] for p in pois_filtered['geometry']]
     data_arr = np.array(poi_list)
     del poi_list[:]
 
@@ -62,11 +76,11 @@ def compute_clusters(pois, alg='dbscan', min_pts=None, eps=None, n_jobs=1):
     print("Done in %0.3fs." % (time() - t0))
 
     # Assign cluster labels to initial POIs
-    pois['cluster_id'] = labels
+    pois_filtered['cluster_id'] = labels
 
     # Separate POIs that are inside clusters from those that are noise
-    pois_in_clusters = pois.loc[pois['cluster_id'] > -1]
-    pois_noise = pois.loc[pois['cluster_id'] == -1]
+    pois_in_clusters = pois_filtered.loc[pois_filtered['cluster_id'] > -1]
+    pois_noise = pois_filtered.loc[pois_filtered['cluster_id'] == -1]
 
     print('Number of clusters: %d' % num_of_clusters)
     print('Number of clustered POIs: %d' % (len(pois_in_clusters)))

@@ -66,6 +66,10 @@ def kwds_freq(gdf, col_kwds='kwds', normalized=False):
         for(kwd, freq) in kwds_freq_dict.items():
             kwds_freq_dict[kwd] = freq / num_of_records
 
+    kwds_freq_dict = dict(sorted(kwds_freq_dict.items(),
+                           key=lambda item: item[1],
+                           reverse=True))
+
     return kwds_freq_dict
 
 

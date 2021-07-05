@@ -5,8 +5,8 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import folium
 from folium.plugins import HeatMap
-from folium.plugins import MarkerCluster
-from loci.analytics import bbox, kwds_freq
+from folium.plugins import FastMarkerCluster
+from loci.analytics import bbox, kwds_freq, filter_by_kwd
 from wordcloud import WordCloud
 from pysal.viz.mapclassify import Natural_Breaks
 from pandas import DataFrame, concat
@@ -14,26 +14,38 @@ from geopandas import GeoDataFrame
 import osmnx
 
 
-def map_points(pois, tiles='OpenStreetMap', width='100%', height='100%', show_bbox=False):
+def map_points(pois, sample_size=-1, kwd=None, show_bbox=False, tiles='OpenStreetMap', width='100%', height='100%'):
     """Returns a Folium Map displaying the provided points. Map center and zoom level are set automatically.
 
     Args:
          pois (GeoDataFrame): A GeoDataFrame containing the POIs to be displayed.
+         sample_size (int): Sample size (default: -1; show all).
+         kwd (string): A keyword to filter by (optional).
+         show_bbox (bool): Whether to show the bounding box of the GeoDataFrame (default: False).
          tiles (string): The tiles to use for the map (default: `OpenStreetMap`).
          width (integer or percentage): Width of the map in pixels or percentage (default: 100%).
          height (integer or percentage): Height of the map in pixels or percentage (default: 100%).
-         show_bbox (bool): Whether to show the bounding box of the GeoDataFrame (default: False).
 
     Returns:
         A Folium Map object displaying the given POIs.
     """
 
     # Set the crs to WGS84
-    if pois.crs['init'] != '4326':
-        pois = pois.to_crs({'init': 'epsg:4326'})
+    # if pois.crs['init'] != '4326':
+    #    pois = pois.to_crs({'init': 'epsg:4326'})
+
+    # Filter by keyword
+    if kwd is None:
+        pois_filtered = pois
+    else:
+        pois_filtered = filter_by_kwd(pois, kwd)
+        
+    # Pick a sample
+    if sample_size > 0 and sample_size < len(pois_filtered.index):
+        pois_filtered = pois_filtered.sample(sample_size)
 
     # Automatically center the map at the center of the bounding box enclosing the POIs.
-    bb = bbox(pois)
+    bb = bbox(pois_filtered)
     map_center = [bb.centroid.y, bb.centroid.x]
 
     # Initialize the map
@@ -42,22 +54,47 @@ def map_points(pois, tiles='OpenStreetMap', width='100%', height='100%', show_bb
     # Automatically set the zoom level
     m.fit_bounds(([bb.bounds[1], bb.bounds[0]], [bb.bounds[3], bb.bounds[2]]))
 
-    # Add pois to a marker cluster
-    coords, popups = [], []
-    for idx, poi in pois.iterrows():
-        coords.append([poi.geometry.y, poi.geometry.x])
-        label = str(poi['id']) + '<br>' + str(poi['name']) + '<br>' + ' '.join(poi['kwds'])
-        popups.append(folium.IFrame(label, width=300, height=100))
+    # Create the marker cluster
+    locations = list(zip(pois_filtered.geometry.y.tolist(),
+                     pois_filtered.geometry.x.tolist(),
+                     pois_filtered.id.tolist(),
+                     pois_filtered.name.tolist(),
+                     pois_filtered.kwds.tolist()))
+    
+    callback = """\
+        function (row) {
+        var icon, marker;
+        icon = L.AwesomeMarkers.icon({
+        icon: 'map-marker', markerColor: 'blue'});
+        marker = L.marker(new L.LatLng(row[0], row[1]));
+        marker.setIcon(icon);
+        var popup = L.popup({height: '300'});
+        popup.setContent(row[2] + '<br/>' + row[3] + '<br/>' + row[4]);
+        marker.bindPopup(popup);
+        return marker;
+        };
+        """
 
-    poi_layer = folium.FeatureGroup(name='pois')
-    poi_layer.add_child(MarkerCluster(locations=coords, popups=popups))
-    m.add_child(poi_layer)
+    m.add_child(folium.plugins.FastMarkerCluster(locations, callback=callback))
+    
+    # Add pois to a marker cluster
+    #coords, popups = [], []
+    #for idx, poi in pois.iterrows():
+    #    coords.append([poi.geometry.y, poi.geometry.x)]
+    #    label = str(poi['id']) + '<br>' + str(poi['name']) + '<br>' + ' '.join(poi['kwds'])
+    #    popups.append(folium.IFrame(label, width=300, height=100))
+
+    #poi_layer = folium.FeatureGroup(name='pois')
+    #poi_layer.add_child(MarkerCluster(locations=coords, popups=popups))
+    #m.add_child(poi_layer)
 
     # folium.GeoJson(pois, tooltip=folium.features.GeoJsonTooltip(fields=['id', 'name', 'kwds'],
     #                                                             aliases=['ID:', 'Name:', 'Keywords:'])).add_to(m)
 
     if show_bbox:
         folium.GeoJson(bb).add_to(m)
+
+    folium.LatLngPopup().add_to(m)
 
     return m
 
@@ -196,26 +233,38 @@ def plot_wordcloud(pois, bg_color='black', width=400, height=200):
     plt.show()
 
 
-def heatmap(pois, tiles='OpenStreetMap', width='100%', height='100%', radius=10):
+def heatmap(pois, sample_size=-1, kwd=None, tiles='OpenStreetMap', width='100%', height='100%', radius=10):
     """Generates a heatmap of the input POIs.
 
     Args:
         pois (GeoDataFrame): A POIs GeoDataFrame.
+        sample_size (int): Sample size (default: -1; show all).
+        kwd (string): A keyword to filter by (optional).
         tiles (string): The tiles to use for the map (default: `OpenStreetMap`).
         width (integer or percentage): Width of the map in pixels or percentage (default: 100%).
         height (integer or percentage): Height of the map in pixels or percentage (default: 100%).
         radius (float): Radius of each point of the heatmap (default: 10).
-
+        
     Returns:
         A Folium Map object displaying the heatmap generated from the POIs.
     """
 
     # Set the crs to WGS84
-    if pois.crs['init'] != '4326':
-        pois = pois.to_crs({'init': 'epsg:4326'})
+    #if pois.crs['init'] != '4326':
+    #    pois = pois.to_crs({'init': 'epsg:4326'})
+
+    # Filter by keyword
+    if kwd is None:
+        pois_filtered = pois
+    else:
+        pois_filtered = filter_by_kwd(pois, kwd)
+        
+    # Pick a sample
+    if sample_size > 0 and sample_size < len(pois_filtered.index):
+        pois_filtered = pois_filtered.sample(sample_size)
 
     # Automatically center the map at the center of the gdf's bounding box
-    bb = bbox(pois)
+    bb = bbox(pois_filtered)
     map_center = [bb.centroid.y, bb.centroid.x]
 
     heat_map = folium.Map(location=map_center, tiles=tiles, width=width, height=height)
@@ -223,9 +272,8 @@ def heatmap(pois, tiles='OpenStreetMap', width='100%', height='100%', radius=10)
     # Automatically set zoom level
     heat_map.fit_bounds(([bb.bounds[1], bb.bounds[0]], [bb.bounds[3], bb.bounds[2]]))
 
-    # List comprehension to make list of lists
-    heat_data = [[row['geometry'].y, row['geometry'].x] for index, row in pois.iterrows()]
-
+    heat_data = [[row['geometry'].y, row['geometry'].x] for index, row in pois_filtered.iterrows()]
+    
     # Plot it on the map
     HeatMap(heat_data, radius=radius).add_to(heat_map)
 
@@ -252,8 +300,8 @@ def map_choropleth(areas, id_field, value_field, fill_color='YlOrRd', fill_opaci
     """
 
     # Set the crs to WGS84
-    if areas.crs['init'] != '4326':
-        areas = areas.to_crs({'init': 'epsg:4326'})
+    # if areas.crs['init'] != '4326':
+    #     areas = areas.to_crs({'init': 'epsg:4326'})
 
     # Automatically center the map at the center of the bounding box enclosing the POIs.
     bb = bbox(areas)
@@ -265,13 +313,17 @@ def map_choropleth(areas, id_field, value_field, fill_color='YlOrRd', fill_opaci
     # Automatically set the zoom level
     m.fit_bounds(([bb.bounds[1], bb.bounds[0]], [bb.bounds[3], bb.bounds[2]]))
 
-    threshold_scale = Natural_Breaks(areas[value_field], k=num_bins).bins.tolist()
-    threshold_scale.insert(0, areas[value_field].min())
+    # threshold_scale = Natural_Breaks(areas[value_field], k=num_bins).bins.tolist()
+    # threshold_scale.insert(0, areas[value_field].min())
+
+    # choropleth = folium.Choropleth(areas, data=areas, columns=[id_field, value_field],
+    #                                key_on='feature.properties.{}'.format(id_field),
+    #                                fill_color=fill_color, fill_opacity=fill_opacity,
+    #                                threshold_scale=threshold_scale).add_to(m)
 
     choropleth = folium.Choropleth(areas, data=areas, columns=[id_field, value_field],
                                    key_on='feature.properties.{}'.format(id_field),
-                                   fill_color=fill_color, fill_opacity=fill_opacity,
-                                   threshold_scale=threshold_scale).add_to(m)
+                                   fill_color=fill_color, fill_opacity=fill_opacity).add_to(m)
 
     # Construct tooltip
     fields = list(areas.columns.values)
