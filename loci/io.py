@@ -1,11 +1,74 @@
 import pandas as pd
+import numpy as np
 from shapely.geometry import Point
+from shapely.geometry import Polygon
 import geopandas as gpd
 import math
 import osmnx
 import requests
 from io import BytesIO
 from zipfile import ZipFile
+
+
+def read_csv(input_file, sep=',', col_id='id', col_name='name', col_lon='lon', col_lat='lat', col_kwds='keywords', kwds_sep=';', source_crs='EPSG:4326', target_crs='EPSG:4326'):
+    """Create a DataFrame from a CSV file and then convert to GeoDataFrame.
+    
+    Args:
+        input_file (string): Path to the input CSV file.
+        sep (string): Column delimiter (default: `;`).
+        col_id (string): Name of the column containing the id (default: `id`).        
+        col_name (string): Name of the column containing the name (default: `name`).        
+        col_lon (string): Name of the column containing the longitude (default: `lon`).
+        col_lat (string): Name of the column containing the latitude (default: `lat`).
+        col_kwds (string): Name of the column containing the keywords (default: `kwds`).
+        kwds_sep (string): Keywords delimiter (default: `;`).
+        source_crs (string): Coordinate Reference System of input data (default: `EPSG:4326`).
+        target_crs (string): Coordinate Reference System of the GeoDataFrame to be created (default: `EPSG:4326`).
+        
+    Returns:
+        A GeoDataFrame.
+    """
+    
+    df = pd.read_csv(input_file, sep=sep, error_bad_lines=False)
+    df = df.rename(columns={col_id: 'id', col_name: 'name', col_lon: 'lon', col_lat: 'lat', col_kwds: 'kwds'})
+    df['id'].replace('', np.nan, inplace=True)
+    df.dropna(subset=['id'], inplace=True)
+    df['name'].replace('', np.nan, inplace=True)
+    df.dropna(subset=['name'], inplace=True)
+    df['kwds'].replace('', np.nan, inplace=True)
+    df.dropna(subset=['kwds'], inplace=True)       
+    df = df[pd.to_numeric(df['lon'], errors='coerce').notnull()]
+    df = df[pd.to_numeric(df['lat'], errors='coerce').notnull()]
+    df['lon'] = df['lon'].apply(lambda x: float(x))
+    df['lat'] = df['lat'].apply(lambda x: float(x))
+    df['kwds'] = df['kwds'].apply(lambda x: x.split(kwds_sep))
+    
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
+    gdf.drop(['lon', 'lat'], inplace=True, axis=1)
+    gdf = gdf.set_crs(source_crs)
+    if target_crs != source_crs:
+        gdf = gdf.to_crs(target_crs)
+        
+    return gdf
+
+
+def crop(gdf, min_lon, min_lat, max_lon, max_lat):
+    """Crops the given GeoDataFrame according to the given bounding box.
+    
+    Args:
+        gdf (GeoDataFrame): The original GeoDataFrame.
+        min_lon, min_lat, max_lon, max_lat (floats): The bounds.
+        
+    Returns:
+        The cropped GeoDataFrame.
+    """
+    
+    polygon = Polygon([(min_lon, min_lat),
+                       (min_lon, max_lat),
+                       (max_lon, max_lat),
+                       (max_lon, min_lat),
+                       (min_lon, min_lat)])
+    return gpd.clip(gdf, polygon)
 
 
 def read_poi_csv(input_file, col_id='id', col_name='name', col_lon='lon', col_lat='lat', col_kwds='kwds', col_sep=';',
