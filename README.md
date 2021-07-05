@@ -15,6 +15,11 @@ LOCI is a Python library providing high-level functions for exploring, mining an
 - Use LDA to extract and assign topics to clusters.
 - Use of frequent itemset mining to discover frequent location sets.
 
+LOCI was originally developed in the EU H2020 project [SLIPO](http://slipo.eu/). In SmartDataLake, its functionality is being extended to include:
+
+- Detection of Areas of Interest characterized by high or low mixture of POI types.
+- Analytics over time series data.
+
 #### Quick start
 
 Please see the provided [notebooks](https://github.com/SLIPO-EU/loci/tree/master/notebooks).
