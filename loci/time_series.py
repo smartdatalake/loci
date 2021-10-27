@@ -1,6 +1,5 @@
 import plotly.offline as pyo
 import plotly.graph_objects as go
-import pandas as pd
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -346,16 +345,19 @@ def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value, to
         count += 1
 
     fig = go.Figure(data=[go.Sankey(
+        valueformat = ".0f",
+        textfont=dict(color="rgba(0,0,0,0)", size=1),
         arrangement = 'snap',
         node = dict(
           pad = 15,
           thickness = 10,
           line = dict(color = "black", width = 1.75),
-          #label = label,
-          customdata = dates,
+          label = dates,
+          customdata = breakpoint_intervals,
           x=node_x_pos,
           y=node_y_pos,
-          color = node_colors
+          color = node_colors,
+          hovertemplate='Value range %{customdata}<extra></extra>',
         ),
         link = dict(
           source = source,
@@ -364,7 +366,7 @@ def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value, to
           line = dict(color = "black", width = 0.75),
           color =  link_colors_rgb,
           customdata = link_breakpoint_intervals,
-          hovertemplate='Outgoing %{value} <br /> From %{source.customdata} to %{target.customdata} <br /> Value range %{customdata}<extra></extra>',
+          hovertemplate='Count: %{value} <br />From %{source.label} to %{target.label}<extra></extra>',
     ))])
 
     fig.update_layout(autosize=True, font_size=16)
@@ -463,11 +465,15 @@ def seasonal_decomposition(ts_df, date_column, data_column, periods, m):
     
     df.index = pd.to_datetime(df.index)
     
-    fig1 = px.line(df, x="Date", y="Trend", title='Trend')
-    fig2 = px.line(df, x="Date", y="Seasonality", title='Seasonality')
-    fig3 = px.line(df, x="Date", y="Residual", title='Residual')
+#     fig1 = px.line(df, x="Date", y="Trend", title='Trend')
+#     fig2 = px.line(df, x="Date", y="Seasonality", title='Seasonality')
+#     fig3 = px.line(df, x="Date", y="Residual", title='Residual')
+    print(df.columns[0:2])
+    fig1 = px.line(df, x="Date", y=df.columns[1:4])
+    fig2 = px.line(df.head(best_period), x=[str(i) for i in list(range(1, best_period+1))], y="Seasonality", title='Seasonality')
     
-    return result, best_period, gain_indexes, fig1, fig2, fig3
+    #return result, best_period, gain_indexes, fig1, fig2, fig3
+    return result, best_period, gain_indexes, fig1, fig2
 
 def rate_change(data, changepoints):
     

@@ -811,7 +811,7 @@ def show_map(gdf, region, colors):
     return m
 
 
-def run_mbrs(gdf, G, rtree, types, params, start_time, seeds):
+def run_mbrs(gdf, G, rtree, types, params, seeds):
     """Computes the top-k high/low mixture regions.
     
     Args:
@@ -820,12 +820,13 @@ def run_mbrs(gdf, G, rtree, types, params, start_time, seeds):
          rtree: The R-tree index constructed over the input points.
          types: The set of distinct point types.
          params: The configuration parameters.
-         start_time: The starting time of the execution.
          seeds: The set of seeds to be used.
                   
     Returns:
          The list of top-k regions found within the given time budget.
     """
+    
+    start_time = time.time()
     
     # Initialize top-k list
     topk_regions = []
