@@ -25,7 +25,7 @@ class Change_Detector:
             
     def set_data(self, data, type, file=False):
         """
-        Pass data to initialize Change Detector.
+        Pass data to initialize Change Detector. Only csv or json are allowed.
         
         :param data: data given or filename to find data.
         :type data: str
@@ -188,7 +188,7 @@ class Change_Detector:
     
     def get_snapshot_similarity(self, snap1, snap2, groups=False):
         """
-        Return the similarity between two snapshots.
+        Calculate Snapshot Similarity between 2 snapshots and return the matching groups with their corresponding similarity scores.
         
         :param snap1: ID of 1st snapshot
         :type snap1: str
@@ -216,7 +216,7 @@ class Change_Detector:
     
     def get_snapshot_evolution(self):
         """
-        Return the vector representing the evolution of the entire snapshot sequence.
+        Calculate Snapshot Evolution and return the similarity scores between subsequent snapshots.
         
         :return: Evolution of snapshot sequence.
         :rtype: list
@@ -282,7 +282,7 @@ class Change_Detector:
     
     def get_group_similarity(self, snap1, group1, snap2, group2):
         """
-        Return the jaccard similarity of two groups.
+        Calculate Similarity between 2 groups (Jaccard).
         
         :param snap1: ID of 1st snapshot.
         :type snap1: str
@@ -320,7 +320,11 @@ class Change_Detector:
  
     def get_group_evolution(self, snap1, group1, snap2, tau=0.8, alpha=1, beta=3):
         """
-        Return the evolution of a group.
+        Calculate Group Evolution for a specific group and return how its \
+        members have been distributed into another snapshot. The status for \
+        the group is also labeled with a number: 0-> Similar, 1->Split, 2-> \
+        Diffused, which is determined by how many groups contain the fraction\
+        tau and whether it lies between alpha and beta.
         
         :param snap1: ID of 1st snapshot.
         :type snap1: str
@@ -330,12 +334,13 @@ class Change_Detector:
         :type snap2: str
         :param tau: Percentage collected, defaults to 0.8
         :type tau: float, optional
-        :param alpha: Parameter for decision, defaults to 1
+        :param alpha: Lower Bound for decision, defaults to 1
         :type alpha: int, optional
-        :param beta: Parameter for decision, defaults to 3
+        :param beta: Upper Bound for decision, defaults to 3
         :type beta: int, optional
         :raises ValueError: ID not in IDs.
-        :return: (status, related_groups): Status, i.e 0-> Similar, 1->Split, 2-> Diffused.  Groups, percentage in each group.
+        :return: (status, related_groups): Status, i.e 0-> Similar, 1->Split,\
+            2-> Diffused.  Groups, percentage in each group.
         :rtype: tuple
 
         """
@@ -370,7 +375,11 @@ class Change_Detector:
         
     def get_group_provenance(self, snap1, group1, snap2, tau=0.8, alpha=1, beta=3):
         """
-        Return the provenance of a group.
+        Calculate Group Provenance for a specific group and return how its \
+        members have been originated from another snapshot. The status for \
+        the group is also labeled with a number: 0-> Similar, 1->Merged, 2-> \
+        Accumulated, which is determined by how many groups contain the \
+        fraction tau and whether it lies between alpha and beta.
         
         :param snap1: ID of 1st snapshot.
         :type snap1: str
@@ -380,12 +389,13 @@ class Change_Detector:
         :type snap2: str
         :param tau: Percentage collected, defaults to 0.8
         :type tau: float, optional
-        :param alpha: Parameter for decision, defaults to 1
+        :param alpha: Lower Bound for decision, defaults to 1
         :type alpha: int, optional
-        :param beta: Parameter for decision, defaults to 3
+        :param beta: Upper Bound for decision, defaults to 3
         :type beta: int, optional
         :raises ValueError: ID not in IDs.
-        :return: (status, related_groups): Status, i.e 0-> Similar, 1->Split, 2-> Diffused.  Groups, percentage in each group.
+        :return: (status, related_groups): Status, i.e 0-> Similar, 1->\
+            Merged, 2-> Accumulated.  Groups, percentage in each group.
         :rtype: tuple
 
         """        
@@ -426,10 +436,31 @@ class Change_Detector:
             raise ValueError(f"Member {member} not in member ids")
         return self.inv_index[member].items()
     
+    def get_member_comembers(self, member, snap):
+        """
+        Return the ids of members in the same group as member in the specific snapshot.
+        
+        :param member: ID of member.
+        :type member: str
+        :param snap: ID of snapshot.
+        :type member: str        
+        :raises ValueError: ID not in IDs.
+        :return: List of ids of members.
+        :rtype: list
+
+        """
+        if member not in self.inv_index:
+            raise ValueError(f"Member {member} not in member ids")
+        if snap not in self.groups:
+            raise ValueError(f"Snapshot {snap} not in snapshot ids")
+            
+        group = self.inv_index[member][snap]
+        return self.groups[snap][group]
 
     def get_member_evolution(self, member):
         """
-        Return the vector representing the evolution of the required member.
+        Calculate Member Evolution and return the similarity scores from \
+        groups between subsequent snapshots, that the member belongs to.
         
         :param member: ID of member.
         :type member: str
@@ -453,12 +484,12 @@ class Change_Detector:
         return out
     
     
-    def get_member_rules(self, members=None, min_support=0.07, min_threshold=1, metric='lift'):
+    def get_member_rules(self, member, min_support=0.07, min_threshold=1, metric='lift'):
         """
-        Return rules from frequent subgroups mining.
+        Return rules from frequent subgroups mining for specific member.
         
-        :param members: List of member ids to use for group filtering. If None is given, then all groups are used, defaults to None
-        :type members: list, optional
+        :param member: Member ID to use for group filtering.
+        :type member: list, optional
         :param min_support: A float between 0 and 1 for minumum support of the itemsets returned, defaults to 0.07
         :type min_support: float, optional
         :param min_threshold: Minimal threshold for the evaluation metric, via the `metric` parameter, to decide whether a candidate rule is of interest, defaults to 1
@@ -480,7 +511,7 @@ class Change_Detector:
         :rtype: DataFrame
 
         """
-        q_mem = members[0]
+        q_mem = member[0]
         no = len(self.inv_index[q_mem])
         
         d = {}
@@ -505,7 +536,7 @@ class Change_Detector:
         
         #Filter and keep only those in members
         final_s = pd.Series([False]*rules.shape[0])
-        for mem in members:
+        for mem in member:
             s = rules.antecedents.apply(lambda x: mem in x)
             final_s = final_s | s
         rules = rules[s]
@@ -588,11 +619,12 @@ class Graph():
                 'width': '50px',
                 'visible': 'false',
                 }
-            }          
+            },   
         ]
         
         style += style_colors
         self.graph.set_style(style)
+        self.graph.wheelSensitivity = 0.5
         
     def __random_position(self, coords, step=200):
         """
@@ -700,7 +732,7 @@ class Graph():
         
         
         
-    def group_evolution(self, cd, snap1, group1, snap2, tau, alpha, beta): 
+    def group_evolution(self, cd, snap1, group1, snap2, tau=0.8, alpha=1, beta=3): 
         """
         Create graph content for Group Evolution for given arguments.
         
@@ -712,11 +744,11 @@ class Graph():
         :type group1: str
         :param snap2: ID of Snapshot2.
         :type snap2: str
-        :param tau: Percentage collected.
+        :param tau: Percentage collected, defaults to 0.8.
         :type tau: float
-        :param alpha: Parameter for decision.
+        :param alpha: Lower Bound for decision, defaults to 1.
         :type alpha: int
-        :param beta: Parameter for decision.
+        :param beta: Upper Bound for decision, defaults to 3.
         :type beta: int
         :return: None
         :rtype: None
@@ -762,7 +794,7 @@ class Graph():
         self.graph.graph.add_graph_from_json(j)      
 
 
-    def group_provenance(self, cd, snap1, group1, snap2, tau, alpha, beta): 
+    def group_provenance(self, cd, snap1, group1, snap2, tau=0.8, alpha=1, beta=3): 
         """
         Create graph content for Group Provenance for given arguments.
         
@@ -774,11 +806,11 @@ class Graph():
         :type group1: str
         :param snap2: ID of Snapshot2.
         :type snap2: str
-        :param tau: Percentage collected.
+        :param tau: Percentage collected, defaults to 0.8.
         :type tau: float
-        :param alpha: Parameter for decision.
+        :param alpha: Lower Bound for decision, defaults to 1.
         :type alpha: int
-        :param beta: Parameter for decision.
+        :param beta: Upper Bound for decision, defaults to 3.
         :type beta: int
         :return: None
         :rtype: None

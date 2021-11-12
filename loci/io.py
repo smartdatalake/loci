@@ -145,11 +145,12 @@ def read_poi_csv(input_file, col_id='id', col_name='name', col_lon='lon', col_la
     return pois
 
 
-def import_osmnx(bound, target_crs='EPSG:4326'):
+def import_osmnx(bound, tags, target_crs='EPSG:4326'):
     """Creates a POI GeoDataFrame from POIs retrieved by OSMNX (https://github.com/gboeing/osmnx).
 
     Args:
         bound (polygon): A polygon to be used as filter.
+        tags (dict): A dictionary of tags regarding POIs in order to filter OSM entities. For example, tags = {'building': True} would return all building footprints in the area; tags = {'amenity':True, 'landuse':['retail','commercial'], 'highway':'bus_stop'} would return the specific amenities.
         target_crs (string): Coordinate Reference System of the GeoDataFrame to be created (default: `EPSG:4326`).
 
     Returns:
@@ -157,7 +158,7 @@ def import_osmnx(bound, target_crs='EPSG:4326'):
     """
 
     # retrieve pois
-    pois = osmnx.pois.pois_from_polygon(bound)
+    pois = osmnx.geometries.geometries_from_polygon(bound, tags)
 
     if len(pois.index) > 0:
         # filter pois
@@ -271,7 +272,8 @@ def retrieve_osm_loc(name, buffer_dist=0):
         A polygon.
     """
 
-    geom = osmnx.core.gdf_from_place(name, buffer_dist=buffer_dist)
+    geom = osmnx.geocode_to_gdf(name, buffer_dist=buffer_dist)
+#    geom = osmnx.core.gdf_from_place(name, buffer_dist=buffer_dist)
     if len(geom.index) > 0:
         geom = geom.iloc[0].geometry
     else:

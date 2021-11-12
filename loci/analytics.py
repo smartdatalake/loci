@@ -91,7 +91,7 @@ def freq_locationsets(location_visits, location_id_col, locations, locationset_i
     itemsets = location_visits.groupby([locationset_id_col], sort=False)[location_id_col].agg(set)
     te = TransactionEncoder()
     oht_ary = te.fit(itemsets).transform(itemsets.values, sparse=True)
-    sparse_df = pd.SparseDataFrame(oht_ary, columns=te.columns_, default_fill_value=False)
+    sparse_df = pd.DataFrame.sparse.from_spmatrix(oht_ary, columns=te.columns_)
 
     apriori_df = apriori(sparse_df, min_support=min_sup, use_colnames=True)
     apriori_df['length'] = apriori_df['itemsets'].apply(lambda x: len(x))

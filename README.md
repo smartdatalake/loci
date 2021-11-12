@@ -22,7 +22,7 @@ LOCI was originally developed in the EU H2020 project [SLIPO](http://slipo.eu/).
 
 #### Quick start
 
-Please see the provided [notebooks](https://github.com/SLIPO-EU/loci/tree/master/notebooks).
+Please see the provided [notebooks](https://github.com/smartdatalake/loci/tree/master/notebooks).
 
 #### Documentation
 
@@ -30,4 +30,4 @@ See [here](https://slipo-eu.github.io/loci/).
 
 #### License
 
-The contents of this project are licensed under the [Apache License 2.0](https://github.com/SLIPO-EU/loci/blob/master/LICENSE).
+The contents of this project are licensed under the [Apache License 2.0](https://github.com/smartdatalake/loci/blob/master/LICENSE).

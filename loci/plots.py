@@ -5,10 +5,8 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import folium
 from folium.plugins import HeatMap
-from folium.plugins import FastMarkerCluster
 from loci.analytics import bbox, kwds_freq, filter_by_kwd
 from wordcloud import WordCloud
-from pysal.viz.mapclassify import Natural_Breaks
 from pandas import DataFrame, concat
 from geopandas import GeoDataFrame
 import osmnx
@@ -31,8 +29,7 @@ def map_points(pois, sample_size=-1, kwd=None, show_bbox=False, tiles='OpenStree
     """
 
     # Set the crs to WGS84
-    # if pois.crs['init'] != '4326':
-    #    pois = pois.to_crs({'init': 'epsg:4326'})
+    pois = to_wgs84(pois)
 
     # Filter by keyword
     if kwd is None:
@@ -113,8 +110,7 @@ def map_geometries(gdf, tiles='OpenStreetMap', width='100%', height='100%'):
     """
 
     # Set the crs to WGS84
-    if gdf.crs['init'] != '4326':
-        gdf = gdf.to_crs({'init': 'epsg:4326'})
+    gdf = to_wgs84(gdf)
 
     # Automatically center the map at the center of the bounding box enclosing the POIs.
     bb = bbox(gdf)
@@ -250,8 +246,7 @@ def heatmap(pois, sample_size=-1, kwd=None, tiles='OpenStreetMap', width='100%',
     """
 
     # Set the crs to WGS84
-    #if pois.crs['init'] != '4326':
-    #    pois = pois.to_crs({'init': 'epsg:4326'})
+    pois = to_wgs84(pois)
 
     # Filter by keyword
     if kwd is None:
@@ -300,8 +295,7 @@ def map_choropleth(areas, id_field, value_field, fill_color='YlOrRd', fill_opaci
     """
 
     # Set the crs to WGS84
-    # if areas.crs['init'] != '4326':
-    #     areas = areas.to_crs({'init': 'epsg:4326'})
+    areas = to_wgs84(areas)
 
     # Automatically center the map at the center of the bounding box enclosing the POIs.
     bb = bbox(areas)
@@ -405,11 +399,9 @@ def map_cluster_diff(clusters_a, clusters_b, intersection_color='#00ff00', diff_
         A Folium Map object displaying cluster intersections and differences.
     """
 
-    if clusters_a.crs['init'] != '4326':
-        clusters_a = clusters_a.to_crs({'init': 'epsg:4326'})
-
-    if clusters_b.crs['init'] != '4326':
-        clusters_b = clusters_b.to_crs({'init': 'epsg:4326'})
+    # Set the crs to WGS84
+    clusters_a = to_wgs84(clusters_a)  
+    clusters_b = to_wgs84(clusters_b)
 
     spatial_index_b = clusters_b.sindex
     prev_size_list = []
@@ -560,8 +552,7 @@ def map_cluster_contents_osm(cluster_borders, tiles='OpenStreetMap', width='100%
         return num != num
 
     # set the crs to WGS84
-    if cluster_borders.crs['init'] != '4326':
-        cluster_borders = cluster_borders.to_crs({'init': 'epsg:4326'})
+    cluster_borders = to_wgs84(cluster_borders)
 
     empty_df = DataFrame(columns=['geometry', 'cluster_id', 'type', 'info'])
     final_gdf = GeoDataFrame(empty_df, crs=cluster_borders.crs, geometry='geometry')
@@ -569,8 +560,8 @@ def map_cluster_contents_osm(cluster_borders, tiles='OpenStreetMap', width='100%
     for index, row in cluster_borders.iterrows():
         poly = row['geometry']
         cluster_id = row['cluster_id']
-        osmnx_gdf = osmnx.footprints.create_footprints_gdf(polygon=poly, footprint_type='building',
-                                                           retain_invalid=False)
+        
+        osmnx_gdf = osmnx.geometries.geometries_from_polygon(poly, {'building': True})
         remaining_cols = []
         columns = list(osmnx_gdf)
 
@@ -610,11 +601,9 @@ def map_cluster_contents_osm(cluster_borders, tiles='OpenStreetMap', width='100%
         osmnx_gdf['info'] = info_list
         osmnx_gdf.drop(columns=remaining_cols, inplace=True)
 
-        oxg = osmnx.core.graph_from_polygon(poly, network_type='all_private', infrastructure='way["highway"]')
-
-        gdf_edges = osmnx.save_load.graph_to_gdfs(oxg, nodes=False, edges=True, node_geometry=True,
-                                                  fill_edge_geometry=True)
-
+        oxg = osmnx.graph_from_polygon(poly, network_type='all_private')
+        gdf_edges = osmnx.utils_graph.graph_to_gdfs(oxg, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
+    
         columns_3 = list(gdf_edges)
         remaining_cols_3 = []
 
@@ -674,3 +663,19 @@ def map_cluster_contents_osm(cluster_borders, tiles='OpenStreetMap', width='100%
     m = map_geometries(final_gdf, tiles=tiles, width=width, height=height)
 
     return m
+
+
+def to_wgs84(gdf):
+    """Reprojects a GeoDataFrame to WGS84 reference system (EPSG:4326).
+
+    Args:
+        gdf (GeoDataFrame): The GeoDataFrame object to be exported.
+
+    Returns:
+        The transformed GeoDataFrame.
+    """   
+    
+    if not ('init=epsg:4326' in gdf.crs.to_string()):
+        gdf = gdf.to_crs({'init': 'epsg:4326'})   # Set the crs to WGS84
+    
+    return gdf

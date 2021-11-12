@@ -14,6 +14,7 @@ from statistics import mean
 from sklearn.cluster import DBSCAN
 import plotly.express as px
 import ruptures as rpt
+from datetime import datetime
 import copy
 import os
 import math
@@ -28,12 +29,18 @@ pyo.init_notebook_mode()
 #------------------------- SAX ---------------------------#
 #--- source: https://github.com/serval-snt-uni-lu/dsco ---#
 #---------------------------------------------------------#
-class SAX(object):
+class __SAX(object):
     """
-    This class is for computing common things with the Symbolic
-    Aggregate approXimation method.  In short, this translates
-    a series of data to a string, which can then be compared with other
-    such strings using a lookup table.
+    This class calculates the Symbolic Aggregate approXimation method (SAX) word of a given time series. In short, this translates a series of data to a string, which can then be compared with other such strings using a lookup table.
+    
+    Source: https://github.com/serval-snt-uni-lu/dsco
+    
+    :param wordSize: The SAX word length.
+    :type wordSize: int
+    :param alphabetSize: The alphabet size for SAX words.
+    :type alphabetSize: int
+    :param epsilon: Used for normalization.
+    :type epsilon: float
     """
 
     def __init__(self, wordSize = 8, alphabetSize = 7, epsilon = 1e-6):
@@ -68,12 +75,23 @@ class SAX(object):
         self.scalingFactor = 1
 
     def get_breakpoints(self):
+        """
+        Returns the SAX breakpoint set.
+        
+        :return: A dictionary containing the breakpoints.
+        :rtype: dict
+        """
         return self.beta.copy()
 
 
     def to_letter_rep(self, x):
         """
-        Function takes a series of data, x, and transforms it to a string representation
+        This function takes a series of data, x, and transforms it to a string representation.
+        
+        :param x: The input data.
+        :type x: list
+        :return: The corresponding string representation.
+        :rtype: string
         """
         (paaX, indices) = self.to_PAA(self.normalize(x))
         self.scalingFactor = np.sqrt((len(x) * 1.0) / (self.wordSize * 1.0))
@@ -81,10 +99,12 @@ class SAX(object):
 
     def normalize(self, x):
         """
-        Function will normalize an array (give it a mean of 0, and a
-        standard deviation of 1) unless it's standard deviation is below
-        epsilon, in which case it returns an array of zeros the length
-        of the original array.
+        This function will z-normalize an array (give it a mean of 0, and a standard deviation of 1) unless it's standard deviation is below epsilon, in which case it returns an array of zeros the length of the original array.
+        
+        :param x: The input array.
+        :type x: list
+        :return: The z-normalized array.
+        :rtype: list
         """
         X = np.asanyarray(x)
         if np.nanstd(X) < self.eps:
@@ -99,10 +119,12 @@ class SAX(object):
 
     def to_PAA(self, x):
         """
-        Function performs Piecewise Aggregate Approximation on data set, reducing
-        the dimension of the dataset x to w discrete levels. returns the reduced
-        dimension data set, as well as the indices corresponding to the original
-        data for each reduced dimension
+        This function performs Piecewise Aggregate Approximation (PAA) on data set, reducing the dimension of the dataset x to w discrete levels. It returns the reduced dimension data set, as well as the indices corresponding to the original data for each reduced dimension
+        
+        :param x: The input array.
+        :type x: list
+        :return: The PAA array.
+        :rtype: list
         """
         n = len(x)
         stepFloat = n/float(self.wordSize)
@@ -119,9 +141,14 @@ class SAX(object):
             frameStart = int(i*stepFloat)
         return (np.array(approximation), indices)
 
-    def alphabetize(self,paaX):
+    def alphabetize(self, paaX):
         """
-        Converts the Piecewise Aggregate Approximation of x to a series of letters.
+        This function converts the Piecewise Aggregate Approximation (PAA) of x to a series of letters.
+        
+        :param paaX: The input PAA array.
+        :type x: list
+        :return: The resulting series of letters.
+        :rtype: list
         """
         alphabetizedX = ''
         for i in range(0, len(paaX)):
@@ -141,8 +168,14 @@ class SAX(object):
 
     def compare_strings(self, sA, sB):
         """
-        Compares two strings based on individual letter distance
-        Requires that both strings are the same length
+        This function compares two strings based on individual letter distance. It requires that both strings are the same length.
+        
+        :param sA: The first string.
+        :type sA: string
+        :param sB: The second string.
+        :type sB: string
+        :return: The resulting letter distance.
+        :rtype: float
         """
         if len(sA) != len(sB):
             raise StringsAreDifferentLength()
@@ -157,15 +190,23 @@ class SAX(object):
 
     def compare_letters(self, la, lb):
         """
-        Compare two letters based on letter distance return distance between
+        This function compares two letters based on their letter distance.
+        
+        :param la: The first letter.
+        :type la: string
+        :param lb: The second letter.
+        :type lb: string
+        :return: The resulting letter distance.
+        :rtype: float
         """
         return self.compareDict[la+lb]
 
     def build_letter_compare_dict(self):
         """
-        Builds up the lookup table to determine numeric distance between two letters
-        given an alphabet size.  Entries for both 'ab' and 'ba' will be created
-        and will have identical values.
+        This function builds up the lookup table to determine numeric distance between two letters given an alphabet size.  Entries for both 'ab' and 'ba' will be created and will have identical values.
+        
+        :return: None.
+        :rtype: none
         """
 
         number_rep = range(0,self.alphabetSize)
@@ -179,49 +220,36 @@ class SAX(object):
                     high_num = np.max([number_rep[i], number_rep[j]])-1
                     low_num = np.min([number_rep[i], number_rep[j]])
                     self.compareDict[letters[i]+letters[j]] = self.beta[high_num] - self.beta[low_num]
-
-    def sliding_window(self, x, numSubsequences = None, overlappingFraction = None):
-        if not numSubsequences:
-            numSubsequences = 20
-        self.windowSize = int(len(x)/numSubsequences)
-        if not overlappingFraction:
-            overlappingFraction = 0.9
-        overlap = self.windowSize*overlappingFraction
-        moveSize = int(self.windowSize - overlap)
-        if moveSize < 1:
-            raise OverlapSpecifiedIsNotSmallerThanWindowSize()
-        ptr = 0
-        n = len(x)
-        windowIndices = []
-        stringRep = []
-        while ptr < n-self.windowSize+1:
-            thisSubRange = x[ptr:ptr+self.windowSize]
-            (thisStringRep,indices) = self.to_letter_rep(thisSubRange)
-            stringRep.append(thisStringRep)
-            windowIndices.append((ptr, ptr+self.windowSize))
-            ptr += moveSize
-        return (stringRep,windowIndices)
-
-    def batch_compare(self, xStrings, refString):
-        return [self.compare_strings(x, refString) for x in xStrings]
-
-    def set_scaling_factor(self, scalingFactor):
-        self.scalingFactor = scalingFactor
-
-    def set_window_size(self, windowSize):
-        self.windowSize = windowSize
         
         
 #-------------------------------------#
 #------ OTHER TS FUNCTIONS -----------#
 #-------------------------------------#
-def read_files(my_path, date_column, data_column):
+def read_files(my_path, date_column, data_column, date_format='%m/%d/%Y'):
+    """
+    Reads all the co-evolving time series files contained in the given path in a Pandas dataframe.
+    
+    :param my_path: The path containing the time series files.
+    :type my_path: string
+    :param date_column: The column number containing the datetime of each entry in each file.
+    :type date_column: int
+    :param data_column: The column number containing the values in each file.
+    :type data_column: int
+    :param date_format: The format of the date.
+    :type date_format: string
+    :return:
+        -df_array (:py:class:'list') - A list containing a Pandas dataframe for each read time series.
+        -filenames (:py:class:'list') - A list containing all read filenames.
+        -start_date (:py:class:'datetime') - The starting datetime of all time series.
+        -end-date (:py:class:'datetime') - The ending datetime of all time series.
+    """
     df_array = []
     try:
         filenames = next(walk(my_path), (None, None, []))[2]
     except:
         return -1, -1, -1
 
+    print(my_path)
     if len(filenames) > 0:
         count = 0
         start_date = None
@@ -242,9 +270,19 @@ def read_files(my_path, date_column, data_column):
             df['normalized'] = zscore(df[data_column])
             df_array.append(df)
 
+    start_date = datetime.strptime(start_date, date_format)
+    end_date = datetime.strptime(end_date, date_format)
     return df_array, filenames, start_date, end_date
 
 def read_file(my_file):
+    """
+    Reads a single time series from the given file.
+    
+    :param my_path: The file
+    :type my_path: string
+    :return: A Pandas dataframe containing the read time series.
+    :rtype: pandas.DataFrame
+    """
     try:
         df = pd.read_csv(my_file, header=None)
     except:
@@ -252,22 +290,52 @@ def read_file(my_file):
 
     return df
         
-def get_date_range(start, end, intv):
-    from datetime import datetime
-    start = datetime.strptime(start,"%m/%d/%Y")
-    end = datetime.strptime(end,"%m/%d/%Y")
+def __get_date_range(start, end, intv, date_format='%m/%d/%Y'):
+    """
+    Returns a list of dates within a given range.
+    
+    :param start: The starting date.
+    :type start: datetime
+    :param end: The ending date.
+    :type end: datetime
+    :param intv: The interval between dates (in days).
+    :type intv: int
+    :return: A list of dates.
+    :rtype: list
+    """
+#     start = datetime.strptime(start,"%m/%d/%Y")
+#     end = datetime.strptime(end,"%m/%d/%Y")
     diff = (end  - start ) / intv
     for i in range(intv):
-        yield (start + diff * i).strftime("%m/%d/%Y")
-    yield end.strftime("%m/%d/%Y")    
+        yield (start + diff * i).strftime(date_format)
+    yield end.strftime(date_format)    
 
-def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value, to_value):
-
-    sax = SAX(wordSize = word_size, alphabetSize = alphabet_size)
+def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value=float('-inf'), to_value=float('+inf')):
+    """
+    This method generates and returns an interactive, Plotly-based SankeyTS diagram. The bands and flows of the diagram are generated based on the SAX words of the loaded set of time series.
+    
+    :param df_array: A list containing a Pandas dataframe for each read time series.
+    :type df_array: list
+    :param alphabet_size: The alphabet size for SAX encoding.
+    :type alphabet_size: int
+    :param word_size: The SAX word length.
+    :type word_size: int
+    :param begin: The starting date for the SankeyTS diagram.
+    :type begin: datetime
+    :param end: The ending date for the SankeyTS diagram.
+    :type end: datetime
+    :param from_value: The starting value for the SankeyTS diagram.
+    :type from_value: float
+    :param to_value: The ending value for the SankeyTS diagram.
+    :type to_value: float
+    :return: A SankeyTS diagram.
+    :rtype: plotly.graph_objects.figure
+    """
+    sax = __SAX(wordSize = word_size, alphabetSize = alphabet_size)
     breakpoints = sax.get_breakpoints()
     breakpoints.insert(0, float("-inf"))
     breakpoints.append(float("+inf"))
-    date_range = list(get_date_range(begin, end, word_size))
+    date_range = list(__get_date_range(begin, end, word_size))
     alphabet = dict(enumerate(string.ascii_lowercase))
     alphabet_inv = dict(zip(string.ascii_lowercase, range(0,26)))
 
@@ -293,13 +361,14 @@ def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value, to
     source_target_value = {}
     node_set = []
     for df in df_array:
-        df[0] = pd.to_datetime(df[0])  
+        df[0] = pd.to_datetime(df[0]).dt.date 
         mask = (df[0] >= begin) & (df[0] <= end)
         df = df.loc[mask]
-
-        if df['normalized'].mean() < from_value or df['normalized'].mean() > to_value:
-            continue
-
+        
+        df = df[df['normalized'] >= from_value]
+        df = df[df['normalized'] <= to_value]
+#         if df['normalized'].mean() < from_value or df['normalized'].mean() > to_value:
+#             continue
         df = df.drop(['normalized'], axis=1)
         signal = df.iloc[:,2:].values
         sax_rep = sax.to_letter_rep(signal)[0]
@@ -374,7 +443,19 @@ def create_sankey(df_array, alphabet_size, word_size, begin, end, from_value, to
     return fig
 
 
-def get_gain_index(trend,seasonality,model,real_values):
+def __get_gain_index(trend, seasonality, model, real_values):
+    """
+    This method takes as input the trend, seasonality the model type as well as the real values of the time series and calculates the gain index. The gain index expresses the contribution of the seasonality to the actual time series. In order to calculate it we calculate the percentage difference between the percentage error of trend vs actual time series and percentage error of trend + seasonality vs actual time series. The higher this index is, the more likely is for the time series to have a strong seasonality component.
+    
+    :param trend: The Trend component.
+    :type trend: list
+    :param seasonality: The Seasonal component.
+    :type seasonality: list
+    :param model: The type of the model, 'additive' or 'multiplicative'.
+    :type model: string
+    :return: The gain index, a percentage which expresses the contribution of the seasonal component.
+    :rtype: float
+    """
     error1 = [] # error between trend vs actual values
     error2 = [] # error between trend + seasonality vs actual values
     
@@ -403,7 +484,22 @@ def get_gain_index(trend,seasonality,model,real_values):
     return error
 
 
-def extract_best_period(ts, dates, periods, model):
+def __extract_best_period(ts, dates, periods, model):
+    """
+    This method decomposes the provided time series using all the provided periods and selects the one that gives the highest gain index. It also returns the calculated gain indexes for all the tested periods. The gain index expresses the contribution of the seasonality to the actual time series. In order to calculate it we calculate the percentage difference between the percentage error of trend vs actual time series and percentage error of trend + seasonality vs actual time series. The higher this index is the more likely is for the time series to have a strong seasonality component.
+    
+    :param ts:A list containing the time series values.
+    :type ts: list
+    :param dates: A list of datetime objects corresponding to the time series values.
+    :type dates: list
+    :param periods: A list containing the periods to be tested.
+    :type periods: list
+    :param model: The type of the model, 'additive' or 'multiplicative'.
+    :type model: string
+    :return:
+        -p (:py:class:'int') - The selected period (the one that gives the highest gain index).
+        -periods_gain_indexes (:py:class:'json') - A json with the {period:gain_index} for all the tested periods.        
+    """
     # Define gain_index and period
     gain_index = float('-inf') 
     p = -1 # best period
@@ -440,7 +536,7 @@ def extract_best_period(ts, dates, periods, model):
         seasonality = np.where(np.isnan(result.seasonal),None,result.seasonal)
         res_error = np.where(np.isnan(result.resid), None, result.resid)
         
-        g = get_gain_index(trend,seasonality,model=m,real_values=ts)
+        g = __get_gain_index(trend,seasonality,model=m,real_values=ts)
         
         if g > gain_index:
             gain_index = g
@@ -448,11 +544,43 @@ def extract_best_period(ts, dates, periods, model):
             
         periods_gain_indexes.update({i:g})
         
-    return p,periods_gain_indexes
+    return p, periods_gain_indexes
 
 
 def seasonal_decomposition(ts_df, date_column, data_column, periods, m):
-    best_period, gain_indexes = extract_best_period(ts_df[data_column].tolist(), ts_df[date_column].tolist(), periods, model=m)
+    """ 
+    This method performs the Triple Time Series Decomposition. The service takes as input a time series, the corresponding model type ("Multiplicative" or "Additive"), a list of periods parameters and the corresponding locale if applicable. The user can insert the path of the selected data or provide them in an array form. If the user provides more than 1 period parameters, the method selects the best one according to the best gain index. The provided time series is decomposed into three distinct components according to the selected model and period:
+        
+    - Trend: the increasing - decreasing value in the series.
+    - Seasonality: the repeating short term cycle in the series.
+    - Residual Error: the random variation in the series.
+
+    An additive model suggests that the components are added toghether as follows:
+    - y(t) = Trend + Seasonality + Residual Error
+
+    While a multilicative model suggests that components are multiplied together as follows:
+    - y(t) = Trend * Seasonality * Residual Error
+
+    This implementation uses the "statsmodels.tsa.seasonal.seasonal_decompose" from the statsmodels library.
+    
+    :param ts_df: A Pandas dataframe containing the loaded time series.
+    :type ts_df: pandas.DataFrame
+    :param date_column: The column number containing the datetime of each entry in each file.
+    :type date_column: int
+    :param data_column: The column number containing the values in each file.
+    :type data_column: int
+    :param periods: A list containing the periods to be tested.
+    :type periods: list
+    :param m: The type of the model, 'additive' or 'multiplicative'.
+    :type m: string
+    :return:
+        -result (:py:class:'statsmodels.tsa.seasonal.seasonal_decompose') - The result of the seasonal decomposition.
+        -best_period (:py:class:'json') - The selected best period based on the minimum mean absolute value of the residual error component.
+        -gain_indexes (:py:class:'json') - A json with the {period:gain_index} for all the tested periods.
+        -fig1 (:py:class:'plotly.express') - A Potly figure containing the trend, seasonality and residual error components.
+        -fig2 (:py:class:'plotly.express') - A Potly figure containing the seasonality component.
+        """
+    best_period, gain_indexes = __extract_best_period(ts_df[data_column].tolist(), ts_df[date_column].tolist(), periods, model=m)
     result = seasonal_decompose(ts_df[data_column].tolist(), period=best_period, model=m)
     
     df = pd.DataFrame(
@@ -465,9 +593,6 @@ def seasonal_decomposition(ts_df, date_column, data_column, periods, m):
     
     df.index = pd.to_datetime(df.index)
     
-#     fig1 = px.line(df, x="Date", y="Trend", title='Trend')
-#     fig2 = px.line(df, x="Date", y="Seasonality", title='Seasonality')
-#     fig3 = px.line(df, x="Date", y="Residual", title='Residual')
     print(df.columns[0:2])
     fig1 = px.line(df, x="Date", y=df.columns[1:4])
     fig2 = px.line(df.head(best_period), x=[str(i) for i in list(range(1, best_period+1))], y="Seasonality", title='Seasonality')
@@ -475,7 +600,18 @@ def seasonal_decomposition(ts_df, date_column, data_column, periods, m):
     #return result, best_period, gain_indexes, fig1, fig2, fig3
     return result, best_period, gain_indexes, fig1, fig2
 
-def rate_change(data, changepoints):
+def __rate_change(data, changepoints):
+    """
+    This method takes as input the data and the change points and calculates the absolute and directional rate change. Rate change is a metric that expresses the significance of a changing point. In order to calculate it we take the absolute percentage difference between the average values of two consecutive segments given a selected window.
+    
+    :param data: A list containing the time series values.
+    :type data: list
+    :param changepoints: The discovered change points.
+    :type changepoints: list
+    :return:
+        -rate_changes (:py:class:'dict') - The change points along with their absolute rate change.
+        -dir_rate_changes (:py:class:'dict') - The change points along with their direcitonal rate change.
+    """
     
     # Initialise a dictionary that holds the changing points and their rate of change
     rate_changes = {}
@@ -508,15 +644,48 @@ def rate_change(data, changepoints):
     return rate_changes, dir_rate_changes
 
 def change_setection_single(ts_df, model, min_size):
+    """
+    This method identifies the change points within a single time series using the PELT approach (i.e., from the ruptures library: https://centre-borelli.github.io/ruptures-docs/user-guide/detection/pelt/).
+    
+    :param ts_df: A Pandas dataframe containing the loaded time series
+    :type ts_df: pandas.DataFrame
+    :param model: The desired PELT model (can be either "l1", "l2", "normal", "rbf", "linear", or "ar"
+    :type model: string
+    :param min_size: The minimum distance (in number of timestamps) between two consecutive change points.
+    :type min_size: int
+    """
     signal = ts_df.iloc[:,2:].values
 
     algo = rpt.Pelt(model=model, min_size=min_size, jump=5).fit(signal)
     my_bkps = algo.predict(pen=3)
 
-    fig, (ax,) = rpt.display(signal, my_bkps, figsize=(16, 10))
+    fig, (ax,) = rpt.display(signal, my_bkps, figsize=(16, 8))
     return fig
 
-def change_detection_collective(ts_df_array, filenames, model, min_size, eps, min_samples, date_column, data_column,):
+def change_detection_collective(ts_df_array, filenames, model, min_size, eps, min_samples, date_column, data_column):
+    """
+    This method identifies the change points within a collection of time series, ranks them and distinguishes them between global and local changes. In order to find the changing points, our implementation uses the PELT approach (from the ruptures library) and calculates their rate change metric. Subsequently, using DBSCAN, it creates some clusters which include the change points that are part of the same global change.
+    
+    :param ts_df_array: A list of Pandas dataframes containing the loaded time series.
+    :type ts_df_array: list
+    :param filenames: The corresponding filename of each time series.
+    :type filenames: list
+    :param model: The desired PELT model (can be either "l1", "l2", "normal", "rbf", "linear", or "ar".
+    :type model: string
+    :param min_size: Minimum number of samples between two change points (ruptures).
+    :type min_size: int
+    :param eps: he maximum distance between two samples for one to be considered as in the neighborhood of the other. This is not a maximum bound on the distances of points within a cluster (DBSCAN).
+    :type eps: int
+    :param min_samples: The number of samples (or total weight) in a neighborhood for a point to be considered as a core point. This includes the point itself (DBSCAN).
+    :type min_samples: int
+    :param date_column: The column number containing the datetime of each entry in each file.
+    :type date_column: int
+    :param data_column: The column number containing the values in each file.
+    :type data_column: int
+    :return:
+        -final_data (:py:class:'dict') - A dictionary containing the timestamps/dates of the identified change points, the name or id of the corresponding time series, the rate change of the change points, local-global cluster label (-1 stands for local changes).
+        -data_clusters (:py:class:'dict') - A dictionary containing all the identified clusters (global changes), their aggregate and absolute aggregate rate changes and corresponding cluster scores, their starting and ending date or timestamp and the number of members of each cluster.
+    """
     # Create Final Dataset
     final_data = pd.DataFrame(columns=['timestamps','rate_change','dir_rate_change','name'])
     num_of_stock = 1
@@ -547,7 +716,7 @@ def change_detection_collective(ts_df_array, filenames, model, min_size, eps, mi
         # Calculate the rate of changes 
         # -----------------------------
         my_bkps.insert(0, 0)
-        results,dir_results = rate_change(signal,my_bkps)
+        results,dir_results = __rate_change(signal,my_bkps)
 
 
         # Create the final dataset
