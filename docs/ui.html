@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. User Interface &mdash; loci 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="3. Tutorial" href="tutorial.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> loci
+          </a>
+              <div class="version">
+                0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">2. Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">3. Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. User Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spatial">4.1. Spatial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#load-data-for-points-of-interest-poi">Load data for Points of Interest (POI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#explore-points">Explore Points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#explore-heatmaps">Explore Heatmaps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#detect-density-clusters">Detect Density Clusters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#detect-mixture-patterns">Detect Mixture Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#temporal">4.2. Temporal</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#single-time-series">Single Time Series</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#load-data">Load Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#seasonal-decomposition">Seasonal decomposition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#change-detection">Change Detection</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#multiple-time-series">Multiple Time Series</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Load Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sankey-ts">Sankey TS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Change Detection</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#set-evolution">Set Evolution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Load Data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">loci</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">4. </span>User Interface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ui.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="user-interface">
+<h1><span class="section-number">4. </span>User Interface<a class="headerlink" href="#user-interface" title="Permalink to this headline"></a></h1>
+<div class="section" id="spatial">
+<h2><span class="section-number">4.1. </span>Spatial<a class="headerlink" href="#spatial" title="Permalink to this headline"></a></h2>
+<div class="section" id="load-data-for-points-of-interest-poi">
+<h3>Load data for Points of Interest (POI)<a class="headerlink" href="#load-data-for-points-of-interest-poi" title="Permalink to this headline"></a></h3>
+<img alt="_images/LOCI_spatial_load.png" src="_images/LOCI_spatial_load.png" />
+<p>To load a POI dataset, (1) navigate to the <strong>Spatial</strong> tab. Then, (2) click on the <strong>Load</strong> tab and provide the various specifications for the POI data (CSV files accepted only). These specifications concern (3) the path to the file, the column delimiter, the necessary columns, and the separator used in the keywords column. Also, please specify (4) the spatial reference system (sourcesCRS) of the original file and the reference system (targetCRS) where the data should be transformed into. You may optionally specify (5) a bounding box to filter the input data and only use POIs contained in this box for exploration and mining. Finally, (6) click on the <strong>Load</strong> button to read the POI data in main memory; once loading is complete, indicative records will be displayed.</p>
+</div>
+<div class="section" id="explore-points">
+<h3>Explore Points<a class="headerlink" href="#explore-points" title="Permalink to this headline"></a></h3>
+<img alt="_images/LOCI_explore_points.png" src="_images/LOCI_explore_points.png" />
+<p>To visualize the previously loaded POI data on map, (1) choose the <strong>Explore</strong> tab within the <strong>Spatial</strong> panel and then (2) click on the <strong>Points</strong> tab. From the dropdown menu, (3) you may select to visualize all POIs or only those of a specific type, as extracted from the keywords column in the dataset. (4) Through the slider, you may specify the size of randomly chosen <em>sample</em> of the data for visualization; for large datasets, you may specify small samples for faster map rendering. (5) You may <em>optionally</em> check on <strong>Show bbox</strong>, in order to also visualize the bounding box of the POI dataset. Finally, (6) press <strong>Show Points</strong> to display the POIs as point clusters over an interactive OpenStreetMap backdrop. Once you pan and zoom in the map, you may see more details of the POI locations.</p>
+</div>
+<div class="section" id="explore-heatmaps">
+<h3>Explore Heatmaps<a class="headerlink" href="#explore-heatmaps" title="Permalink to this headline"></a></h3>
+<img alt="_images/LOCI_explore_heatmaps.png" src="_images/LOCI_explore_heatmaps.png" />
+<p>To create a heatmap of the previously loaded POI data on map, (1) choose the <strong>Explore</strong> tab within the <strong>Spatial</strong> panel and then (2) click on the <strong>Heatmap</strong> tab. From the dropdown menu, (3) you may select to visualize all POIs or only those of a specific type, as extracted from the keywords column in the dataset. (4) Through the slider, you may specify the size of randomly chosen <em>sample</em> of the data for analysis; for large datasets, you may specify small samples for faster processing. Also specify (5) the <em>radius</em> of influence of each point in the heatmap. Finally, (6) press <strong>Show Heatmap</strong> to display the created heatmap over an interactive OpenStreetMap backdrop. You may pan and zoom the map to inspect more details of the heatmap.</p>
+</div>
+<div class="section" id="detect-density-clusters">
+<h3>Detect Density Clusters<a class="headerlink" href="#detect-density-clusters" title="Permalink to this headline"></a></h3>
+<img alt="_images/LOCI_explore_density_clusters.png" src="_images/LOCI_explore_density_clusters.png" />
+<p>To discover density-based <em>clusters</em> of the previously loaded POI data on map, (1) choose the <strong>Explore</strong> tab within the <strong>Spatial</strong> panel and then (2) click on the <strong>Density Clusters</strong> tab. From the dropdown menu, (3) you may select to utilize all POIs or only those of a specific type, as extracted from the keywords column in the dataset. (4) Through the slider, you may specify the size of randomly chosen sample of the data to be used in clustering; for large datasets, you may specify small samples for faster calculation. Then, you may choose (5) the density based clustering method (DBSCAN or HDBSCAN) to apply. Density-based clustering also requires values for two other parameters: (6) the minimum number of neighboring points for a core (dense) point in the cluster; and (7) the neighborhood radius. Finally, (8) press the button to <strong>Compute Clusters</strong> and then to display them over an interactive OpenStreetMap backdrop with degraded color depending on their density. You may pan and zoom the map to inspect more details about the detected clusters.</p>
+</div>
+<div class="section" id="detect-mixture-patterns">
+<h3>Detect Mixture Patterns<a class="headerlink" href="#detect-mixture-patterns" title="Permalink to this headline"></a></h3>
+<img alt="_images/LOCI_explore_mixture_clusters.png" src="_images/LOCI_explore_mixture_clusters.png" />
+<p>To discover regions with <em>high</em> or <em>low diversity</em> in the types of POIs therein, (1) choose the <strong>Explore</strong> tab within the <strong>Spatial</strong> panel and then (2) click on the <strong>Mixture Clusters</strong> tab. This computation involves two stages:</p>
+<ul class="simple">
+<li><p><em>Preprocessing</em>: A connectivity graph must be constructed before any discovery. (3) This is done according to a given <em>radius</em>; pairs of POIs within this distance threshold are connected with an edge in the graph. (4) <em>Optionally</em>, for faster discovery over large datasets, POIs may be aggregated into cells; check on <strong>Apply grid partitioning</strong>  to use a uniform grid where the specified radius is the cell size. (5) Press <strong>Create Graph</strong> to construct the graph. As long as these preprocessing parameters remain unchanged, the graph need not be reconstructed and may be used for discovery of mixture clusters under any user-specified settings.</p></li>
+<li><p><em>Discovery</em>: Once the graph is constructed, you must specify several parameters concerning the method for discovering mixture clusters. These include: (6) the maximum size of a region, i.e., the maximum number of points (or cells, in case grid <em>partitioning</em> was checked and applied during preprocessing) within each region; (7) A size weight denoting the importance of region size in the score calculation; (8) A <em>time</em> budget, i.e., the maximum allowed execution time for the algorithm; (9) The entropy mode, i.e., whether you wish to search for regions of high or low mixture; (10) The <em>discovery algorithm</em> to apply; from the dropdown, you may choose one of <em>ExpAll, ExpSingle, ExpHybrid, or ExpCircles</em>; (11) The percentage (%) of the initial POIs to be used as <em>initial seeds</em> for the discovery; (12) The maximum allowed degree of <em>overlap</em> between two regions; and (13) the number k of regions regions with the highest scores to be returned. Finally, (14) press <strong>Compute Regions</strong> to trigger the discovery process; results should be returned within the specified time budget and will be visualized on map.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="temporal">
+<h2><span class="section-number">4.2. </span>Temporal<a class="headerlink" href="#temporal" title="Permalink to this headline"></a></h2>
+<div class="section" id="single-time-series">
+<h3>Single Time Series<a class="headerlink" href="#single-time-series" title="Permalink to this headline"></a></h3>
+<div class="section" id="load-data">
+<h4>Load Data<a class="headerlink" href="#load-data" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_load_single.png" src="_images/TS_load_single.png" />
+<p>To load a single time series, navigate to the <strong>Temporal</strong> (step 1) tab. Then, on the <strong>Single Time Series</strong> (step 2) tab, navigate to the <strong>Load</strong> (step 3) tab and provide (i) the path to the file containing the time series (step 4), (ii) the date column (step 5) and (iii) the data column (step 6). Finally, click on the Load button (step 7) to load the time series in main memory.</p>
+</div>
+<div class="section" id="seasonal-decomposition">
+<h4>Seasonal decomposition<a class="headerlink" href="#seasonal-decomposition" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_seasonality_analysis.png" src="_images/TS_seasonality_analysis.png" />
+<p>To perform seasonal decomposition on a loaded time series, navigate to the <strong>Seasonality Analysis</strong> sub-tab (step 1). Then, enter the set of periods to be tested in the <strong>Periods</strong> field (step 2, can be separated by a comma, or a hyphen, indicating a range of periods, e.g., 5-10). Next, select the model (step 3) and click on the <strong>Decompose</strong> button (step 4). Finally, the returned trend-seasonality-residuals and seasonality graphs are rendered.</p>
+</div>
+<div class="section" id="change-detection">
+<h4>Change Detection<a class="headerlink" href="#change-detection" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_change_points_single.png" src="_images/TS_change_points_single.png" />
+<p>To apply change detection on a loaded time series, navigate to the <strong>Change Detection</strong> sub-tab (step 1). Then, select a model from the corresponding drop-down list (step 2) and the minimum desired distance (in number of timestamps) between consecutive change points (step 3). Finally, click on the <strong>Detect</strong> button (step 4); the graph containing the change points (i.e., on timestamps where the color changes) is rendered.</p>
+</div>
+</div>
+<div class="section" id="multiple-time-series">
+<h3>Multiple Time Series<a class="headerlink" href="#multiple-time-series" title="Permalink to this headline"></a></h3>
+<div class="section" id="id1">
+<h4>Load Data<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_load_multiple.png" src="_images/TS_load_multiple.png" />
+<p>To load multiple time series, navigate to the <strong>Temporal</strong> tab. Then, on the <strong>Multiple Time Series</strong> (step 1) tab, navigate to the <strong>Load</strong> (step 2) tab and provide (i) the path to the folder containing the time series files (step 3), (ii) the date column (step 4) and (iii) the data column (step 5). Finally, click on the Load button (step 6) to load the time series set in main memory.</p>
+</div>
+<div class="section" id="sankey-ts">
+<h4>Sankey TS<a class="headerlink" href="#sankey-ts" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_SankeyTS.png" src="_images/TS_SankeyTS.png" />
+<p>To generate a <strong>Sankey TS</strong> diagram on a loaded set of time series, navigate to the SankeyTS sub-tab (step 1). Then, select the SAX alphabet and word size using the sliders (step 2 and step 3) and select the starting/ending dates using the date picker widgets (step 4 and step 5). Next, provide the lower/upper value axis bounds (step 6 and step 7) for which the diagram will be generated. Finally, click on the <strong>Create Diagram</strong> (step 8) button.</p>
+</div>
+<div class="section" id="id2">
+<h4>Change Detection<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h4>
+<img alt="_images/TS_change_points_multiple.png" src="_images/TS_change_points_multiple.png" />
+<p>To apply change detection on a loaded set of time series, navigate to the <strong>Change Detection</strong> sub-tab (step 1). Then, select a model from the corresponding drop-down list (step 2), the minimum distance (in number of timestamps) between change points (step 3), the maximum distance (in number of timestamps) between two change points to be considered in the same cluster (step 4) and the number of change points in the neighborhood of a point, for it to be considered as a core point (step 5). Finally, click on the <strong>Detect</strong> button (step 6); this renders two scrollable data frames, containing the detected global change points and corresponding clusters.</p>
+</div>
+</div>
+<div class="section" id="set-evolution">
+<h3>Set Evolution<a class="headerlink" href="#set-evolution" title="Permalink to this headline"></a></h3>
+<div class="section" id="id3">
+<h4>Load Data<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h4>
+<img alt="_images/cdevset_1.png" src="_images/cdevset_1.png" />
+<p>To load data for Set Evolution, choose tab <strong>Temporal</strong> (step 1) and then choose tab <strong>Set Evolution</strong> (step 2). The user can select which file to use (step 3). The corresponding files are in /datasets/evolving_sets/data/. Only files ending with .csv and .json are listed, since Change_Detector can only read these formats. Press Choose (step 4) to read file and initialize Change_Detector. Finally, observe the initial snapshots (step 5). Use the mouse wheel to zoom-in and -out or click the left-button to navigate.</p>
+<img alt="_images/cdevset_2.png" src="_images/cdevset_2.png" />
+<p>To perform analysis, select the appropriate tab (step 1), based on the corresponding methods: <strong>Snapshot</strong>, <strong>Group</strong> or <strong>Member</strong>. Select an inner tab (step 2) for the corresponding action: Snapshot -&gt; (<strong>Evolution</strong>, <strong>Similarity</strong>), Group -&gt; (<strong>Evolution</strong>, <strong>Provenance</strong>, <strong>Similarity</strong>), Member -&gt; (<strong>Evolution</strong>, <strong>Rules</strong>, <strong>Co-members</strong>). More information on each action can be found here <a class="reference internal" href="loci.html#loci.set_evolution.Change_Detector" title="loci.set_evolution.Change_Detector"><code class="xref py py-class docutils literal notranslate"><span class="pre">Change_Detector</span></code></a>. Fill the corresponding parameters of each action (step 3). More information can be found here <a class="reference internal" href="loci.html#loci.set_evolution.Change_Detector" title="loci.set_evolution.Change_Detector"><code class="xref py py-class docutils literal notranslate"><span class="pre">Change_Detector</span></code></a>. Submit choice (step 4). Finally, observe the results in the graph (step 5). Depending on the action, there might be edges or colors in nodes or a dataframe for member rules.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial.html" class="btn btn-neutral float-left" title="3. Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, IMSI, Athena Research Center.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

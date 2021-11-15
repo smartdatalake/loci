@@ -3,13 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to loci's documentation!
+Welcome to LOCI documentation!
 ================================
 
+LOCI is a component providing functionalities for analysing, mining, and
+visualizing spatial and temporal data.
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
+   :numbered: 2
    :caption: Contents:
 
+   introduction
+   installation
+   tutorial
+   ui
+   
 
 
 Indices and tables
@@ -18,3 +27,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

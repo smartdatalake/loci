@@ -12,6 +12,14 @@ loci.analytics module
     :undoc-members:
     :show-inheritance:
 
+loci.brs module
+---------------
+
+.. automodule:: loci.brs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 loci.clustering module
 ----------------------
 
@@ -20,14 +28,6 @@ loci.clustering module
     :undoc-members:
     :show-inheritance:
 
-loci.topics module
-----------------------
-
-.. automodule:: loci.topics
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    
 loci.index module
 -----------------
 
@@ -44,6 +44,14 @@ loci.io module
     :undoc-members:
     :show-inheritance:
 
+loci.mbrs module
+----------------
+
+.. automodule:: loci.mbrs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 loci.plots module
 -----------------
 
@@ -52,6 +60,29 @@ loci.plots module
     :undoc-members:
     :show-inheritance:
 
+loci.set_evolution module
+-------------------------
+
+.. automodule:: loci.set_evolution
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+loci.time_series module
+-----------------------
+
+.. automodule:: loci.time_series
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+loci.topics module
+------------------
+
+.. automodule:: loci.topics
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Module contents
 ---------------

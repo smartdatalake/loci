@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>loci.set_evolution &mdash; loci 0.1.0 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> loci
+          </a>
+              <div class="version">
+                0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">2. Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">3. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui.html">4. User Interface</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">loci</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>loci.set_evolution</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for loci.set_evolution</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">mlxtend.frequent_patterns</span> <span class="k">import</span> <span class="n">association_rules</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">ipycytoscape</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<div class="viewcode-block" id="Change_Detector"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector">[docs]</a><span class="k">class</span> <span class="nc">Change_Detector</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Change Detector class for studying evolving sets.</span>
+
+<span class="sd">    :param similarities: map for caching group similarities, in the form of (group1, group2) -&gt; sim</span>
+<span class="sd">    :type similarities: dict</span>
+<span class="sd">    :param groups: 3d map, in the form of snapshot-&gt;group-&gt;member</span>
+<span class="sd">    :type groups: dict</span>
+<span class="sd">    :param matchings: map for caching snapshot similarities, in the form of (snapshot1, snapshot2) -&gt; (group1, group2, sim)</span>
+<span class="sd">    :type matchings: dict</span>
+<span class="sd">    :param inv_index: 3d map, in the form of member-&gt;snapshot-&gt;group</span>
+<span class="sd">    :type inv_index: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+            
+<div class="viewcode-block" id="Change_Detector.set_data"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.set_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pass data to initialize Change Detector. Only csv or json are allowed.</span>
+<span class="sd">        </span>
+<span class="sd">        :param data: data given or filename to find data.</span>
+<span class="sd">        :type data: str</span>
+<span class="sd">        :param type: type of data given, &quot;json&quot; or &quot;csv&quot;.</span>
+<span class="sd">        :type type: str</span>
+<span class="sd">        :param file: whether file is given for input. Filename is stored in data, defaults to False</span>
+<span class="sd">        :type file: bool, optional</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">if</span> <span class="nb">type</span><span class="o">==</span><span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__construct_groups_from_json</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;csv&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">data</span>  
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>                
+            <span class="bp">self</span><span class="o">.</span><span class="n">__construct_groups_from_csv</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>            </div>
+
+            
+    <span class="k">def</span> <span class="nf">__construct_groups_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that transforms a json into the appropriate class structure.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">snap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">])</span>
+                
+                <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">member</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">snap</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>                        
+
+    <span class="k">def</span> <span class="nf">__construct_groups_from_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that transforms a pandas dataframe into the appropriate class structure.</span>
+<span class="sd">        </span>
+<span class="sd">        :param df: DataFrame into the form of snap,group,member.</span>
+<span class="sd">        :type df: DataFrame</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">snap</span><span class="p">,</span> <span class="n">group</span><span class="p">),</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">snap</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span>
+            
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">member</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">snap</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>   
+
+
+    <span class="k">def</span> <span class="nf">__sum_matching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that calculates sum of matching.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :return: Sum of matching of two snapshots.</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">snap_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span>
+        <span class="n">matching</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">,</span> <span class="n">sim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span><span class="p">[</span><span class="n">snap_key</span><span class="p">]:</span>
+            <span class="n">matching</span> <span class="o">+=</span> <span class="n">sim</span>
+            
+        <span class="n">score</span> <span class="o">=</span> <span class="n">matching</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap2</span><span class="p">])</span> <span class="o">-</span> <span class="n">matching</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">score</span>    
+    
+    <span class="k">def</span> <span class="nf">__calculate_all_group_similarities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that calculates all jaccards between groups.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :return: All jacards of all groups of two snapshots.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">group1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">group2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap2</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>        
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_group_similarity</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">__calculate_snapshot_matching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that calculates the matching between two snapshots.</span>
+<span class="sd">                </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :return: Matching of two snapshots.</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sum_matching</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span>
+        
+        <span class="n">similarities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_all_group_similarities</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span>
+        
+        <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">),</span> <span class="n">sim</span> <span class="ow">in</span> <span class="n">similarities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap1}</span><span class="s1">_</span><span class="si">{group1}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap2}</span><span class="s1">_</span><span class="si">{group2}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">sim</span><span class="p">)</span>
+         
+         
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">max_weight_matching</span><span class="p">(</span><span class="n">g</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">group1</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">snap1</span><span class="p">):</span>
+                <span class="n">edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">group1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">group2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">[(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)][</span><span class="s1">&#39;weight&#39;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">group2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">group1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">[(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)][</span><span class="s1">&#39;weight&#39;</span><span class="p">])</span>
+            <span class="n">edges</span> <span class="o">+=</span> <span class="p">[</span><span class="n">edge</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">edges</span>
+         
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sum_matching</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span> 
+    
+<div class="viewcode-block" id="Change_Detector.get_snapshots"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_snapshots">[docs]</a>    <span class="k">def</span> <span class="nf">get_snapshots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the ids of snapshots.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: List of ids of snapshots.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Change_Detector.get_snapshot_similarity"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_snapshot_similarity">[docs]</a>    <span class="k">def</span> <span class="nf">get_snapshot_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Snapshot Similarity between 2 snapshots and return the matching groups with their corresponding similarity scores.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param groups: Whether return or not the groups of the matching, defaults to False</span>
+<span class="sd">        :type groups: bool, optional</span>
+<span class="sd">        :raises ValueError: If snapshot ID not snapshot IDs.</span>
+<span class="sd">        :return: If groups=False, returns similarity of two snapshots. If groups=True, returns (sim, matching), i.e. detailed similarities of matching.</span>
+<span class="sd">        :rtype: tuple</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">snap1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap1}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">snap2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap2}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_snapshot_matching</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sum_matching</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchings</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sum_matching</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span> </div>
+    
+    
+<div class="viewcode-block" id="Change_Detector.get_snapshot_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_snapshot_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">get_snapshot_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Snapshot Evolution and return the similarity scores between subsequent snapshots.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Evolution of snapshot sequence.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_snapshot_similarity</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="kc">False</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+    
+    
+    <span class="k">def</span> <span class="nf">__calculate_group_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that calculates jaccard of two groups.</span>
+<span class="sd">        </span>
+<span class="sd">        :param group1: 1st group.</span>
+<span class="sd">        :type group1: set</span>
+<span class="sd">        :param group2: 2nd group.</span>
+<span class="sd">        :type group2: set</span>
+<span class="sd">        :return: Jaccard score of two groups.</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">group1</span> <span class="o">&amp;</span> <span class="n">group2</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">group1</span> <span class="o">|</span> <span class="n">group2</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__get_group_concentration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inner function that calculates number of groups required to cover tau concentration.</span>
+<span class="sd">        </span>
+<span class="sd">        :param groups: Member distribution of current group.</span>
+<span class="sd">        :type groups: list</span>
+<span class="sd">        :param tau: Threshold for concentration.</span>
+<span class="sd">        :type tau: double</span>
+<span class="sd">        :return: Number of groups required to cover tau concentration.</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">no</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="n">g</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">no</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="n">tau</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">no</span>
+    
+<div class="viewcode-block" id="Change_Detector.get_groups"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_groups">[docs]</a>    <span class="k">def</span> <span class="nf">get_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the ids of groups inside a specific snapshot.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap: ID of snapshot.</span>
+<span class="sd">        :type snap: str</span>
+<span class="sd">        :raises ValueError: ID not in snapshot IDs.</span>
+<span class="sd">        :return: List of ids of groups.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">snap</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>    </div>
+    
+
+    
+<div class="viewcode-block" id="Change_Detector.get_group_similarity"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_group_similarity">[docs]</a>    <span class="k">def</span> <span class="nf">get_group_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Similarity between 2 groups (Jaccard).</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of 1st group.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param group2: ID of 2nd group.</span>
+<span class="sd">        :type group2: str</span>
+<span class="sd">        :raises ValueError: ID not in list of IDs.</span>
+<span class="sd">        :return: Similarity of the two groups (jaccard).</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">snap1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap1}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">snap2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap2}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">group1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Group </span><span class="si">{group1}</span><span class="s2"> not in snapshot </span><span class="si">{snap1}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">group2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap2</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Group </span><span class="si">{group2}</span><span class="s2"> not in snapshot </span><span class="si">{snap2}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)]:</span>
+            <span class="n">g1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">][</span><span class="n">group1</span><span class="p">]</span>
+            
+            <span class="n">g2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap2</span><span class="p">][</span><span class="n">group2</span><span class="p">]</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)][(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__calculate_group_similarity</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarities</span><span class="p">[(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">)][(</span><span class="n">group1</span><span class="p">,</span> <span class="n">group2</span><span class="p">)]</span></div>
+
+ 
+<div class="viewcode-block" id="Change_Detector.get_group_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_group_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">get_group_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Group Evolution for a specific group and return how its \</span>
+<span class="sd">        members have been distributed into another snapshot. The status for \</span>
+<span class="sd">        the group is also labeled with a number: 0-&gt; Similar, 1-&gt;Split, 2-&gt; \</span>
+<span class="sd">        Diffused, which is determined by how many groups contain the fraction\</span>
+<span class="sd">        tau and whether it lies between alpha and beta.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of 1st group.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param tau: Percentage collected, defaults to 0.8</span>
+<span class="sd">        :type tau: float, optional</span>
+<span class="sd">        :param alpha: Lower Bound for decision, defaults to 1</span>
+<span class="sd">        :type alpha: int, optional</span>
+<span class="sd">        :param beta: Upper Bound for decision, defaults to 3</span>
+<span class="sd">        :type beta: int, optional</span>
+<span class="sd">        :raises ValueError: ID not in IDs.</span>
+<span class="sd">        :return: (status, related_groups): Status, i.e 0-&gt; Similar, 1-&gt;Split,\</span>
+<span class="sd">            2-&gt; Diffused.  Groups, percentage in each group.</span>
+<span class="sd">        :rtype: tuple</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">snap1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap1}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">snap2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap2}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">group1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Group </span><span class="si">{group1}</span><span class="s2"> not in snapshot </span><span class="si">{snap1}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">][</span><span class="n">group1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">snap2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">snap2</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cc</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span><span class="n">cc</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="n">related_groups</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">related_groups</span> <span class="o">=</span> <span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">val</span><span class="o">/</span><span class="n">total</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">related_groups</span><span class="p">]</span>
+
+        <span class="n">no_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_group_concentration</span><span class="p">(</span><span class="n">related_groups</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">no_groups</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># similar group</span>
+        <span class="k">elif</span> <span class="n">no_groups</span> <span class="o">&lt;</span> <span class="n">beta</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># split into 3 groups</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="mi">2</span>   <span class="c1"># diffused</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">related_groups</span><span class="p">)</span></div>
+    
+        
+<div class="viewcode-block" id="Change_Detector.get_group_provenance"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_group_provenance">[docs]</a>    <span class="k">def</span> <span class="nf">get_group_provenance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Group Provenance for a specific group and return how its \</span>
+<span class="sd">        members have been originated from another snapshot. The status for \</span>
+<span class="sd">        the group is also labeled with a number: 0-&gt; Similar, 1-&gt;Merged, 2-&gt; \</span>
+<span class="sd">        Accumulated, which is determined by how many groups contain the \</span>
+<span class="sd">        fraction tau and whether it lies between alpha and beta.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap1: ID of 1st snapshot.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of 1st group.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of 2nd snapshot.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param tau: Percentage collected, defaults to 0.8</span>
+<span class="sd">        :type tau: float, optional</span>
+<span class="sd">        :param alpha: Lower Bound for decision, defaults to 1</span>
+<span class="sd">        :type alpha: int, optional</span>
+<span class="sd">        :param beta: Upper Bound for decision, defaults to 3</span>
+<span class="sd">        :type beta: int, optional</span>
+<span class="sd">        :raises ValueError: ID not in IDs.</span>
+<span class="sd">        :return: (status, related_groups): Status, i.e 0-&gt; Similar, 1-&gt;\</span>
+<span class="sd">            Merged, 2-&gt; Accumulated.  Groups, percentage in each group.</span>
+<span class="sd">        :rtype: tuple</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group_evolution</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span></div>
+
+            
+<div class="viewcode-block" id="Change_Detector.get_members"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_members">[docs]</a>    <span class="k">def</span> <span class="nf">get_members</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the ids of members inside a specific group of a specific snapshot.</span>
+<span class="sd">        </span>
+<span class="sd">        :param snap: ID of snapshot.</span>
+<span class="sd">        :type snap: str</span>
+<span class="sd">        :param group: ID of group.</span>
+<span class="sd">        :type group: str</span>
+<span class="sd">        :raises ValueError: ID not in IDs.</span>
+<span class="sd">        :return: List of ids of members.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">snap</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">group</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Group </span><span class="si">{group}</span><span class="s2"> not in snapshot </span><span class="si">{snap}</span><span class="s2">&quot;</span><span class="p">)</span>      
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="Change_Detector.get_groups_of_member"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_groups_of_member">[docs]</a>    <span class="k">def</span> <span class="nf">get_groups_of_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the ids of (snapshot,group) that a member belongs to.</span>
+<span class="sd">        </span>
+<span class="sd">        :param member: ID of member.</span>
+<span class="sd">        :type member: str</span>
+<span class="sd">        :raises ValueError: Member ID not in IDs.</span>
+<span class="sd">        :return: List of ids of (snapshot,group).</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">member</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Member </span><span class="si">{member}</span><span class="s2"> not in member ids&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="Change_Detector.get_member_comembers"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_member_comembers">[docs]</a>    <span class="k">def</span> <span class="nf">get_member_comembers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">snap</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the ids of members in the same group as member in the specific snapshot.</span>
+<span class="sd">        </span>
+<span class="sd">        :param member: ID of member.</span>
+<span class="sd">        :type member: str</span>
+<span class="sd">        :param snap: ID of snapshot.</span>
+<span class="sd">        :type member: str        </span>
+<span class="sd">        :raises ValueError: ID not in IDs.</span>
+<span class="sd">        :return: List of ids of members.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">member</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Member </span><span class="si">{member}</span><span class="s2"> not in member ids&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">snap</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Snapshot </span><span class="si">{snap}</span><span class="s2"> not in snapshot ids&quot;</span><span class="p">)</span>
+            
+        <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">snap</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap</span><span class="p">][</span><span class="n">group</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Change_Detector.get_member_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_member_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">get_member_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Member Evolution and return the similarity scores from \</span>
+<span class="sd">        groups between subsequent snapshots, that the member belongs to.</span>
+<span class="sd">        </span>
+<span class="sd">        :param member: ID of member.</span>
+<span class="sd">        :type member: str</span>
+<span class="sd">        :raises ValueError: Member ID not in member IDs.</span>
+<span class="sd">        :return: Evolution of member.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">member</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Member </span><span class="si">{member}</span><span class="s2"> not in member ids&quot;</span><span class="p">)</span>
+            
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]</span> <span class="ow">and</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">]:</span>
+                <span class="n">sim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_group_similarity</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span>
+                                                <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">member</span><span class="p">][</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sim</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">sim</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+    
+    
+<div class="viewcode-block" id="Change_Detector.get_member_rules"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Change_Detector.get_member_rules">[docs]</a>    <span class="k">def</span> <span class="nf">get_member_rules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">min_support</span><span class="o">=</span><span class="mf">0.07</span><span class="p">,</span> <span class="n">min_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;lift&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return rules from frequent subgroups mining for specific member.</span>
+<span class="sd">        </span>
+<span class="sd">        :param member: Member ID to use for group filtering.</span>
+<span class="sd">        :type member: list, optional</span>
+<span class="sd">        :param min_support: A float between 0 and 1 for minumum support of the itemsets returned, defaults to 0.07</span>
+<span class="sd">        :type min_support: float, optional</span>
+<span class="sd">        :param min_threshold: Minimal threshold for the evaluation metric, via the `metric` parameter, to decide whether a candidate rule is of interest, defaults to 1</span>
+<span class="sd">        :type min_threshold: float, optional</span>
+<span class="sd">        :param metric: Metric to use: &#39;lift&#39;, &#39;support&#39;, &#39;confidence&#39;, &#39;leverage&#39;, &#39;conviction&#39;, defaults to &#39;lift&#39;</span>
+<span class="sd">        :type metric: str, optional</span>
+<span class="sd">        :return: pandas DataFrame with columns &quot;antecedents&quot; and &quot;consequents&quot;</span>
+<span class="sd">              that store itemsets, plus the scoring metric columns:</span>
+<span class="sd">              &quot;antecedent support&quot;, &quot;consequent support&quot;,</span>
+<span class="sd">              &quot;support&quot;, &quot;confidence&quot;, &quot;lift&quot;,</span>
+<span class="sd">              &quot;leverage&quot;, &quot;conviction&quot;</span>
+<span class="sd">              of all rules for which</span>
+<span class="sd">              metric(rule) &gt;= min_threshold.</span>
+<span class="sd">              Each entry in the &quot;antecedents&quot; and &quot;consequents&quot; columns are</span>
+<span class="sd">              of type `frozenset`, which is a Python built-in type that</span>
+<span class="sd">              behaves similarly to sets except that it is immutable</span>
+<span class="sd">              (For more info, see</span>
+<span class="sd">              https://docs.python.org/3.6/library/stdtypes.html#frozenset).</span>
+<span class="sd">        :rtype: DataFrame</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">q_mem</span> <span class="o">=</span> <span class="n">member</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">no</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">q_mem</span><span class="p">])</span>
+        
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">mem</span><span class="p">,</span> <span class="n">gr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inv_index</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">mem</span> <span class="o">==</span> <span class="n">q_mem</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">d</span><span class="p">[(</span><span class="n">mem</span><span class="p">,)]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gr</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[(</span><span class="n">q_mem</span><span class="p">,</span> <span class="n">mem</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gr</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[(</span><span class="n">q_mem</span><span class="p">,)]</span> <span class="o">=</span> <span class="n">no</span>
+            
+        <span class="n">d2</span> <span class="o">=</span> <span class="p">{}</span>    
+        <span class="k">for</span> <span class="n">mem</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">d2</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">mem</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">mem</span><span class="p">]</span> <span class="o">/</span> <span class="n">no</span>
+        
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;support&#39;</span><span class="p">:</span> <span class="n">d2</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="s1">&#39;itemsets&#39;</span><span class="p">:</span> <span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">()})</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">support</span> <span class="o">&gt;</span> <span class="n">min_support</span><span class="p">]</span>
+        
+        <span class="n">frequent_itemsets</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="c1">#create rules of A-&gt;B ONLY with confidence</span>
+        <span class="n">rules</span> <span class="o">=</span> <span class="n">association_rules</span><span class="p">(</span><span class="n">frequent_itemsets</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span> <span class="n">min_threshold</span><span class="o">=</span><span class="n">min_threshold</span><span class="p">)</span>
+        
+        
+        <span class="c1">#Filter and keep only those in members</span>
+        <span class="n">final_s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">False</span><span class="p">]</span><span class="o">*</span><span class="n">rules</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">mem</span> <span class="ow">in</span> <span class="n">member</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">rules</span><span class="o">.</span><span class="n">antecedents</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">mem</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">final_s</span> <span class="o">=</span> <span class="n">final_s</span> <span class="o">|</span> <span class="n">s</span>
+        <span class="n">rules</span> <span class="o">=</span> <span class="n">rules</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">rules</span></div></div>
+        
+
+
+<div class="viewcode-block" id="Graph"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph">[docs]</a><span class="k">class</span> <span class="nc">Graph</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Class for visualizing Change Detector methods.&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">ipycytoscape</span><span class="o">.</span><span class="n">CytoscapeWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">set_layout</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;preset&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="mi">200</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;darkblue&#39;</span><span class="p">,</span> <span class="s1">&#39;lightblue&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="s1">&#39;purple&#39;</span><span class="p">,</span> <span class="s1">&#39;brown&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="s1">&#39;maroon&#39;</span><span class="p">,</span> <span class="s1">&#39;lime&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="s1">&#39;olive&#39;</span><span class="p">,</span> <span class="s1">&#39;pink&#39;</span><span class="p">,</span> <span class="s1">&#39;aquamarine&#39;</span><span class="p">]</span>
+        
+        <span class="n">style_colors</span> <span class="o">=</span>  <span class="p">[{</span><span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;.</span><span class="si">{c}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;background-color&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">,</span> <span class="s1">&#39;line-color&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">}}</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">]</span>
+        
+        <span class="n">style</span> <span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;node&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="s1">&#39;data(label)&#39;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+              <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s2">&quot;edge[label]&quot;</span><span class="p">,</span>
+              <span class="s1">&#39;css&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;data(label)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;text-rotation&quot;</span><span class="p">:</span> <span class="s2">&quot;autorotate&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;text-margin-x&quot;</span><span class="p">:</span> <span class="s2">&quot;0px&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;text-margin-y&quot;</span><span class="p">:</span> <span class="s2">&quot;-20px&quot;</span>
+              <span class="p">}</span>
+            <span class="p">},</span>    
+            <span class="p">{</span>
+                <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.rectangle&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;rectangle&#39;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>      
+            <span class="p">{</span>
+                <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.rrectangle&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;round rectangle&#39;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>    
+            <span class="p">{</span>
+                <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.ellipse&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;ellipse&#39;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>            
+            <span class="p">{</span>
+            <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.member&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;background-color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;line-color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;ellipse&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="s1">&#39;25px&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="s1">&#39;25px&#39;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">},</span>    
+            <span class="p">{</span>
+            <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.nomember&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;ellipse&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="s1">&#39;25px&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="s1">&#39;25px&#39;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+            <span class="s1">&#39;selector&#39;</span><span class="p">:</span> <span class="s1">&#39;.yomember&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;ellipse&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="s1">&#39;50px&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="s1">&#39;50px&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;visible&#39;</span><span class="p">:</span> <span class="s1">&#39;false&#39;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">},</span>   
+        <span class="p">]</span>
+        
+        <span class="n">style</span> <span class="o">+=</span> <span class="n">style_colors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">wheelSensitivity</span> <span class="o">=</span> <span class="mf">0.5</span>
+        
+    <span class="k">def</span> <span class="nf">__random_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return coordinates of node in graph.</span>
+<span class="sd">        </span>
+<span class="sd">        :param coords: Dictionary of matrix coordinates with keys &#39;x&#39; and &#39;y&#39;</span>
+<span class="sd">        :type coords: dict</span>
+<span class="sd">        :param step: Step in increasing coords, defaults to 200</span>
+<span class="sd">        :type step: int, optional</span>
+<span class="sd">        :return: Dictionary of coordinates with keys &#39;x&#39; and &#39;y&#39;</span>
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_x</span><span class="p">,</span> <span class="n">total_y</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">coords</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">total_x</span><span class="p">,</span> <span class="n">total_x</span><span class="o">+</span><span class="n">step</span><span class="p">)),</span>
+                <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">total_y</span><span class="p">,</span> <span class="n">total_y</span><span class="o">+</span><span class="n">step</span><span class="p">))}</span>         
+        
+<div class="viewcode-block" id="Graph.init_graph"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.init_graph">[docs]</a>    <span class="k">def</span> <span class="nf">init_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        
+        <span class="n">snaps</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_snapshots</span><span class="p">()</span>
+    
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">total_x</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">200</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">snap</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">snaps</span><span class="p">):</span>
+            <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">snap</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span><span class="n">snap</span><span class="p">},</span> <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="s1">&#39;rectangle&#39;</span><span class="p">}]</span>
+            
+            <span class="n">total_y</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_groups</span><span class="p">(</span><span class="n">snap</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">groups</span><span class="p">):</span>
+                
+                <span class="n">members</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_members</span><span class="p">(</span><span class="n">snap</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+                
+                <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap}</span><span class="s1">_</span><span class="si">{group}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)),</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">snap</span><span class="p">},</span> 
+                           <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">total_x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">total_y</span><span class="p">},</span> <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> 
+                           <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="s1">&#39;ellipse&#39;</span><span class="p">}]</span>
+                
+                <span class="n">total_y</span> <span class="o">+=</span> <span class="n">step</span>   
+            <span class="n">total_x</span> <span class="o">+=</span> <span class="n">step</span>   
+            
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_j</span> <span class="o">=</span> <span class="n">j</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_j</span><span class="p">)</span></div>
+        
+
+<div class="viewcode-block" id="Graph.snapshot_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.snapshot_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">snapshot_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Snapshot Evolution.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>
+    
+        <span class="n">evol</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_snapshot_evolution</span><span class="p">()</span>
+    
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> 
+                           <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">])}}</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">evol</span><span class="p">)]</span>
+    
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span></div>
+        
+        
+<div class="viewcode-block" id="Graph.snapshot_similarity"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.snapshot_similarity">[docs]</a>    <span class="k">def</span> <span class="nf">snapshot_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Snapshot Similarity between given snapshots.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object.</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :param snap1: ID of Snapshot1</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param snap2: ID of Snapshot2</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>
+        
+        <span class="n">matching</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_snapshot_similarity</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap1}</span><span class="s1">_</span><span class="si">{e[0]}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap2}</span><span class="s1">_</span><span class="si">{e[1]}</span><span class="s1">&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">])}}</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">matching</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>      </div>
+        
+        
+        
+<div class="viewcode-block" id="Graph.group_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.group_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">group_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Group Evolution for given arguments.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object.</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :param snap1: ID of Snapshot1.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of Group1.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of Snapshot2.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param tau: Percentage collected, defaults to 0.8.</span>
+<span class="sd">        :type tau: float</span>
+<span class="sd">        :param alpha: Lower Bound for decision, defaults to 1.</span>
+<span class="sd">        :type alpha: int</span>
+<span class="sd">        :param beta: Upper Bound for decision, defaults to 3.</span>
+<span class="sd">        :type beta: int</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>
+        
+        <span class="n">evol</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cd</span><span class="o">.</span><span class="n">get_group_evolution</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">:</span>
+            <span class="n">evol</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap1}</span><span class="s1">_</span><span class="si">{group1}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap2}</span><span class="s1">_</span><span class="si">{e}</span><span class="s1">&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">evol</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">evol</span><span class="p">[</span><span class="n">e</span><span class="p">])}}</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">]</span>
+        
+        
+        <span class="n">lcolors</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">evol</span><span class="p">)}</span>
+        <span class="n">lcolors</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;gray&#39;</span>
+        
+        <span class="n">parent_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">)])</span>
+        <span class="n">parent_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">parent_ids</span><span class="p">:</span>
+                <span class="n">parent_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">node</span>
+        
+        
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">cd</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">][</span><span class="n">group1</span><span class="p">]:</span>
+            <span class="n">group2</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">snap2</span><span class="p">]</span> <span class="k">if</span> <span class="n">snap2</span> <span class="ow">in</span> <span class="n">cd</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+            
+            <span class="n">par1</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">)</span>
+            <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par1</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par1</span><span class="p">},</span> 
+                       <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">lcolors</span><span class="p">[</span><span class="n">group2</span><span class="p">],</span>
+                       <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par1</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+                       <span class="p">}]</span>
+
+            <span class="k">if</span> <span class="n">group2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">par2</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span>
+                <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par2</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par2</span> <span class="p">},</span> 
+                           <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">lcolors</span><span class="p">[</span><span class="n">group2</span><span class="p">],</span>
+                           <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par2</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+                           <span class="p">}]</span>
+            
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>      </div>
+
+
+<div class="viewcode-block" id="Graph.group_provenance"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.group_provenance">[docs]</a>    <span class="k">def</span> <span class="nf">group_provenance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Group Provenance for given arguments.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object.</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :param snap1: ID of Snapshot1.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of Group1.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of Snapshot2.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param tau: Percentage collected, defaults to 0.8.</span>
+<span class="sd">        :type tau: float</span>
+<span class="sd">        :param alpha: Lower Bound for decision, defaults to 1.</span>
+<span class="sd">        :type alpha: int</span>
+<span class="sd">        :param beta: Upper Bound for decision, defaults to 3.</span>
+<span class="sd">        :type beta: int</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>
+        
+        <span class="n">evol</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cd</span><span class="o">.</span><span class="n">get_group_provenance</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">:</span>
+            <span class="n">evol</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>        
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap1}</span><span class="s1">_</span><span class="si">{group1}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{snap2}</span><span class="s1">_</span><span class="si">{e}</span><span class="s1">&#39;</span><span class="p">,</span> 
+                           <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">evol</span><span class="p">[</span><span class="n">e</span><span class="p">],</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">evol</span><span class="p">[</span><span class="n">e</span><span class="p">])}}</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">]</span>
+    
+        <span class="n">lcolors</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">evol</span><span class="p">)}</span>
+        <span class="n">lcolors</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;gray&#39;</span>
+        
+        <span class="n">parent_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">)])</span>
+        <span class="n">parent_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">parent_ids</span><span class="p">:</span>
+                <span class="n">parent_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">node</span>
+        
+        
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">cd</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">snap1</span><span class="p">][</span><span class="n">group1</span><span class="p">]:</span>
+            <span class="n">group2</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">snap2</span><span class="p">]</span> <span class="k">if</span> <span class="n">snap2</span> <span class="ow">in</span> <span class="n">cd</span><span class="o">.</span><span class="n">inv_index</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">par1</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">)</span>
+            <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par1</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par1</span><span class="p">},</span> 
+                       <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">lcolors</span><span class="p">[</span><span class="n">group2</span><span class="p">],</span>
+                       <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par1</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+                       <span class="p">}]</span>
+
+            <span class="k">if</span> <span class="n">group2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">par2</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span>
+                <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par2</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par2</span> <span class="p">},</span> 
+                           <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">lcolors</span><span class="p">[</span><span class="n">group2</span><span class="p">],</span>
+                           <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par2</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
+                           <span class="p">}]</span>
+            
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>    
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>           </div>
+        
+        
+<div class="viewcode-block" id="Graph.group_similarity"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.group_similarity">[docs]</a>    <span class="k">def</span> <span class="nf">group_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Group Similarity for given arguments.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object.</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :param snap1: ID of Snapshot1.</span>
+<span class="sd">        :type snap1: str</span>
+<span class="sd">        :param group1: ID of Group1.</span>
+<span class="sd">        :type group1: str</span>
+<span class="sd">        :param snap2: ID of Snapshot2.</span>
+<span class="sd">        :type snap2: str</span>
+<span class="sd">        :param group2: ID of Group2.</span>
+<span class="sd">        :type group2: str</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>
+        
+        <span class="n">sim</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_group_similarity</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">,</span> <span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span>
+        
+        <span class="n">g1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cd</span><span class="o">.</span><span class="n">get_members</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">))</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">cd</span><span class="o">.</span><span class="n">get_members</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">))</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="n">g1</span> <span class="o">&amp;</span> <span class="n">g2</span>
+        
+        <span class="n">par1</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap1</span><span class="p">,</span> <span class="n">group1</span><span class="p">)</span>
+        <span class="n">par2</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap2</span><span class="p">,</span> <span class="n">group2</span><span class="p">)</span>
+        
+        <span class="n">parent_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="n">par1</span><span class="p">,</span> <span class="n">par2</span><span class="p">]:</span>
+                <span class="n">parent_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">node</span>
+        
+        
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">g1</span><span class="p">:</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="s1">&#39;member&#39;</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">common</span> <span class="k">else</span> <span class="s1">&#39;nomember&#39;</span>
+            <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par1</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par1</span><span class="p">},</span> 
+                       <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par1</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+                       <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">classes</span><span class="p">}]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">g2</span><span class="p">:</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="s1">&#39;member&#39;</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">common</span> <span class="k">else</span> <span class="s1">&#39;nomember&#39;</span>
+            <span class="n">nodes</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">par2</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">par2</span><span class="p">},</span> 
+                       <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__random_position</span><span class="p">(</span><span class="n">parent_nodes</span><span class="p">[</span><span class="n">par2</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+                       <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="n">classes</span><span class="p">}]</span>            
+        
+        
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="n">par1</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">par2</span><span class="p">,</span> 
+                           <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">sim</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sim</span><span class="p">)}}]</span>
+    
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>         </div>
+        
+        
+<div class="viewcode-block" id="Graph.member_evolution"><a class="viewcode-back" href="../../loci.html#loci.set_evolution.Graph.member_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">member_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">member</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create graph content for Member Evolution for given member.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cd: Change_Detector object.</span>
+<span class="sd">        :type cd: class:`Change_Detector`</span>
+<span class="sd">        :param member: ID of Member.</span>
+<span class="sd">        :type member: str</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__clean_nodes</span><span class="p">()</span>        
+        
+        <span class="n">evol</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">get_member_evolution</span><span class="p">(</span><span class="n">member</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cd</span><span class="o">.</span><span class="n">get_groups_of_member</span><span class="p">(</span><span class="n">member</span><span class="p">))</span>
+
+        <span class="n">parent_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{s}</span><span class="s1">_</span><span class="si">{g}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+
+        <span class="n">parent_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">parent_ids</span><span class="p">:</span>
+                <span class="n">parent_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">node</span>
+             
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evol</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">groups</span> <span class="ow">or</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="n">edges</span> <span class="o">+=</span> <span class="p">[{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">member</span><span class="p">),</span>
+                                <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">member</span><span class="p">),</span>
+                                <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">])}}]</span>
+
+            <span class="n">parent_id</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="n">nid</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{parent_id}</span><span class="s1">_</span><span class="si">{member}</span><span class="s1">&#39;</span>
+            <span class="n">nodes</span><span class="p">[</span><span class="n">nid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">nid</span><span class="p">,</span>
+                            <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">member</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">parent_id</span><span class="p">},</span> 
+                          <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="n">parent_nodes</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+                          <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="s1">&#39;member&#39;</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cached_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nid</span><span class="p">)</span>
+
+            <span class="n">parent_id</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+            <span class="n">nid</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{parent_id}</span><span class="s1">_</span><span class="si">{member}</span><span class="s1">&#39;</span>
+            <span class="n">nodes</span><span class="p">[</span><span class="n">nid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">nid</span><span class="p">,</span>
+                            <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">member</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">parent_id</span><span class="p">},</span> 
+                          <span class="s2">&quot;grabbable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="n">parent_nodes</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+                          <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="s1">&#39;member&#39;</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cached_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nid</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
+        <span class="n">j</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;edges&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="n">j</span><span class="p">)</span></div>
+        
+        
+    <span class="k">def</span> <span class="nf">__clean_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">add_graph_from_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_j</span><span class="p">)</span></div>
+        
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Athena Research Center, IMSI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

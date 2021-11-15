@@ -21,8 +21,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = u'loci'
-copyright = u'2019, Panagiotis Kalampokis, Dimitris Skoutas'
-author = u'Panagiotis Kalampokis, Dimitris Skoutas'
+copyright = u'2021, IMSI, Athena Research Center'
+author = u'IMSI, Athena Research Center'
 
 # The short X.Y version
 version = u'0.1'
@@ -45,7 +45,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
 ]
-autodoc_mock_imports = ['pandas', 'numpy', 'scipy', 'matplotlib', 'folium', 'shapely', 'geopandas', 'hdbscan', 'wordcloud', 'pysal', 'sklearn', 'pyLDAvis', 'mlxtend', 'osmnx', 'requests', 'zipfile']
+autodoc_mock_imports = ['folium', 'geopandas', 'hdbscan', 'matplotlib', 'mlxtend', 'numpy', 'osmnx', 'pandas', 'plotly', 'pyLDAvis', 'pysal', 'requests', 'scipy', 'seaborn', 'shapely', 'sklearn', 'statsmodels', 'wordcloud', 'zipfile']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -136,7 +136,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'loci.tex', u'loci Documentation',
-     u'Panagiotis Kalampokis, Dimitris Skoutas', 'manual'),
+     u'IMSI, Athena Research Center', 'manual'),
 ]
 
 
@@ -182,6 +182,7 @@ epub_exclude_files = ['search.html']
 
 # -- Extension configuration -------------------------------------------------
 extensions = ['sphinx.ext.todo', 'sphinx.ext.napoleon', 'sphinx.ext.viewcode']
+bibtex_bibfiles = []
 
 # -- Options for intersphinx extension ---------------------------------------
 
