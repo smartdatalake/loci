@@ -12,6 +12,20 @@ Please see the provided [notebooks](https://github.com/smartdatalake/loci/tree/m
 
 Please see [here](https://smartdatalake.github.io/loci/).
 
+#### Creating and launching a Docker image 
+
+We provide an indicative `Dockerfile` that may be used to create a Docker image (`loci_st`) from the executable:
+
+```sh
+$ docker build -t loci_st .
+```
+
+This docker image can then be used to launch a web service application via voila as follows:
+
+```sh
+$ docker run loci_st
+```
+
 #### License
 
 The contents of this project are licensed under the [Apache License 2.0](https://github.com/smartdatalake/loci/blob/master/LICENSE).
