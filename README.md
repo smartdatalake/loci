@@ -12,18 +12,34 @@ Please see the provided [notebooks](https://github.com/smartdatalake/loci/tree/m
 
 Please see [here](https://smartdatalake.github.io/loci/).
 
-#### Creating and launching a Docker image 
+### Installation
 
-We provide an indicative `Dockerfile` that may be used to create a Docker image (`loci_st`) from the executable:
+#### Python Module
+
+LOCI can be found [here](https://pypi.org/project/loci-st/) and installed with:
 
 ```sh
-$ docker build -t loci_st .
+$ pip install loci-st
+```
+
+#### Creating and launching a Docker image 
+
+We provide a `Dockerfile` that may be used to create a Docker image (`loci_st`) from the executable:
+
+```sh
+$ docker build -t smartdatalake/loci .
 ```
 
 This docker image can then be used to launch a web service application via voila as follows:
 
 ```sh
-$ docker run loci_st
+$ docker run smartdatalake/loci
+```
+
+The image can also be found [here](https://hub.docker.com/r/smartdatalake/loci) and pulled with:
+
+```sh
+$ docker pull smartdatalake/loci
 ```
 
 #### License
